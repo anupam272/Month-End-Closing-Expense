@@ -16,7 +16,7 @@ except Exception:
     st.error("Supabase Connection Error! Please verify credentials in secrets.")
     st.stop()
 
-st.set_page_config(page_title="PRISM - POS Cash Terminal", page_icon="💳", layout="wide")
+st.set_page_config(page_title="PRISM - Month-End POS Terminal", page_icon="💳", layout="wide")
 
 # POS Terminal Custom Styling & Focus Glow
 st.markdown("""
@@ -90,7 +90,7 @@ st.markdown("""
         color: #94a3b8 !important; 
     }
 
-    /* Main Form Layout Box */
+    /* Main Form & Container Box */
     div[data-testid="stForm"] {
         background: #1e293b;
         border: 1px solid #334155;
@@ -188,47 +188,15 @@ def fetch_all_properties():
         pass
     return pd.DataFrame()
 
-def get_property_details(prism_id):
-    clean_id = str(prism_id).strip().upper()
-    if not clean_id:
-        return "", "UK"
-    
-    search_ids = [clean_id]
-    if "_" not in clean_id and len(clean_id) > 2:
-        search_ids.append(f"{clean_id[:2]}_{clean_id[2:]}")
-
-    for target_id in search_ids:
-        try:
-            res = supabase.table("properties").select("property_name, property_region").eq("prism_id", target_id).limit(1).execute()
-            if res.data and len(res.data) > 0:
-                name = res.data[0].get("property_name", "")
-                region = res.data[0].get("property_region", "UK")
-                if name:
-                    return name, region
-        except Exception:
-            pass
-            
-        try:
-            res = supabase.table("month_end_cash_tracker").select("hotel_name, region").eq("prism_id", target_id).limit(1).execute()
-            if res.data and len(res.data) > 0:
-                name = res.data[0].get("hotel_name", "")
-                region = res.data[0].get("region", "UK")
-                if name:
-                    return name, region
-        except Exception:
-            pass
-
-    return "", "UK"
-
 # POS Live Clock Bar
 live_clock_html = """
 <div class="pos-header-container">
     <div style="display: flex; align-items: center; gap: 14px;">
         <div class="prism-pos-badge">PRISM POS</div>
-        <div style="color: #94a3b8; font-size: 14px; font-weight: 500;">Month-End Cash Entry Kiosk</div>
+        <div style="color: #94a3b8; font-size: 14px; font-weight: 500;">UK & Europe Month-End Cash Terminal</div>
     </div>
     <div style="display: flex; align-items: center; gap: 20px;">
-        <div class="pos-status-online">TERMINAL ACTIVE</div>
+        <div class="pos-status-online">SECURE SESSION</div>
         <div id="live-clock" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #38bdf8;">Loading...</div>
     </div>
 </div>
@@ -258,91 +226,130 @@ updateClock();
 with st.sidebar:
     st.markdown("<div style='font-family: monospace; font-size: 20px; font-weight: 800; color: #38bdf8; margin-bottom: 10px;'>PRISM TERMINAL</div>", unsafe_allow_html=True)
     if not st.session_state.authenticated:
-        st.markdown("<div style='color: #64748b; font-size: 12px;'>Sign in to access POS modules.</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #64748b; font-size: 12px;'>Please authenticate to access cash closing modules.</div>", unsafe_allow_html=True)
     else:
         st.markdown(f"👤 **Operator:** {st.session_state.username}")
-        st.markdown(f"🔑 **Role:** {st.session_state.user_role}")
+        st.markdown(f"🔑 **Access Level:** {st.session_state.user_role}")
         st.markdown("---")
-        page = st.sidebar.radio("Navigation Menu", [
-            "Submit Month-End Entry", 
+        page = st.sidebar.radio("Terminal Menu", [
+            "Submit Month-End Closing", 
             "Closing Overview & Ledger", 
-            "Audit & Status Update", 
-            "Month-End Reports"
+            "Audit & Status Management", 
+            "Master Reports & Pending"
         ])
-        if st.sidebar.button("Logout"):
+        if st.sidebar.button("🔒 End Terminal Session"):
             st.session_state.authenticated = False
             st.rerun()
 
-# Login Screen
+# ----------------- UPGRADED OPERATOR LOGIN SCREEN -----------------
 if not st.session_state.authenticated:
     components.html(live_clock_html, height=75)
-    col1, col2, col3 = st.columns([1, 1.1, 1])
+    st.markdown("<br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
-        with st.form("login_form"):
-            st.markdown("<h3 style='color:#38bdf8; font-family: monospace;'>🔒 OPERATOR LOGIN</h3>", unsafe_allow_html=True)
-            user_input = st.text_input("Username")
-            pass_input = st.text_input("Password", type="password")
-            submit = st.form_submit_button("LOGIN TO TERMINAL")
+        with st.form("pos_login_form"):
+            st.markdown("""
+                <div style='text-align: center; margin-bottom: 20px;'>
+                    <h2 style='color:#38bdf8; font-family: monospace; margin-bottom: 5px;'>🔐 TERMINAL LOGIN</h2>
+                    <p style='color:#94a3b8; font-size: 13px;'>Enter operator credentials to access cash closing system</p>
+                </div>
+            """, unsafe_allow_html=True)
             
-            if submit:
-                try:
-                    res = supabase.table("userstb").select("*").eq("username", user_input.strip()).execute()
-                    if res.data and str(res.data[0].get("password", "")).strip() == pass_input.strip():
-                        st.session_state.authenticated = True
-                        st.session_state.username = res.data[0]["username"]
-                        st.session_state.user_role = res.data[0].get("role", "User")
-                        st.rerun()
-                    else:
-                        st.error("Invalid Operator Credentials!")
-                except Exception as err:
-                    st.error(f"Error: {str(err)}")
+            user_input = st.text_input("OPERATOR USERNAME", placeholder="e.g. admin or finance_uk")
+            pass_input = st.text_input("SECURE PASSWORD", type="password", placeholder="••••••••")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            login_submit = st.form_submit_button("🚀 AUTHORIZE & OPEN TERMINAL")
+            
+            if login_submit:
+                if not user_input.strip() or not pass_input.strip():
+                    st.error("⚠️ Please enter both username and password.")
+                else:
+                    try:
+                        res = supabase.table("userstb").select("*").eq("username", user_input.strip()).execute()
+                        if res.data and str(res.data[0].get("password", "")).strip() == pass_input.strip():
+                            st.session_state.authenticated = True
+                            st.session_state.username = res.data[0]["username"]
+                            st.session_state.user_role = res.data[0].get("role", "Standard User")
+                            st.rerun()
+                        else:
+                            st.error("❌ Authentication Failed: Invalid Credentials!")
+                    except Exception as err:
+                        st.error(f"Database Connection Error: {str(err)}")
     st.stop()
 
 REGION_OPTIONS = ["UK", "Europe"]
 POST_OPTIONS = ["GM", "CGM", "Reception", "Host", "Mice", "Accounts", "PPM", "Other"]
 MONTH_OPTIONS = ["Jan-2026", "Feb-2026", "Mar-2026", "Apr-2026", "May-2026", "Jun-2026", "Jul-2026", "Aug-2026", "Sep-2026", "Oct-2026", "Nov-2026", "Dec-2026"]
 
-if page == "Submit Month-End Entry":
+# ----------------- 1. SUBMIT MONTH-END CLOSING TERMINAL -----------------
+if page == "Submit Month-End Closing":
     components.html(live_clock_html, height=75)
     
-    prism_id_input = st.text_input(
-        "PRISM PROPERTY ID (Type & Press Enter)", 
-        key="prism_search", 
-        placeholder="e.g. DE_SCHO003 or DESCHO003",
-    )
+    properties_df = fetch_all_properties()
+    property_options = []
+    prop_mapping = {}
+    
+    if not properties_df.empty:
+        for _, row in properties_df.iterrows():
+            p_id = str(row.get("prism_id", "")).strip()
+            p_name = str(row.get("property_name", "")).strip()
+            p_region = str(row.get("property_region", "UK")).strip()
+            display_str = f"{p_id} — {p_name} ({p_region})"
+            property_options.append(display_str)
+            prop_mapping[display_str] = {"prism_id": p_id, "name": p_name, "region": p_region}
 
-    auto_hotel_name, auto_region = get_property_details(prism_id_input)
+    st.markdown("<h4 style='color: #38bdf8; font-family: monospace;'>⚡ MONTH-END CASH CLOSING WIZARD</h4>", unsafe_allow_html=True)
+    
+    selected_property_display = st.selectbox("SELECT PROPERTY FROM MASTER DIRECTORY", property_options if property_options else ["No properties found"])
+    
+    if selected_property_display in prop_mapping:
+        auto_prism_id = prop_mapping[selected_property_display]["prism_id"]
+        auto_hotel_name = prop_mapping[selected_property_display]["name"]
+        auto_region = prop_mapping[selected_property_display]["region"]
+    else:
+        auto_prism_id = ""
+        auto_hotel_name = ""
+        auto_region = "UK"
 
-    with st.form("cash_form", clear_on_submit=False):
+    with st.form("cash_closing_form", clear_on_submit=False):
+        st.markdown("<div class='pos-section-title'>🏢 PROPERTY & PERIOD IDENTIFICATION</div>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         
         with col1:
-            hotel_name = st.text_input("HOTEL NAME", value=auto_hotel_name, placeholder="Enter Property / Hotel Name")
+            prism_id_input = st.text_input("PRISM PROPERTY ID (AUTO)", value=auto_prism_id)
+            hotel_name = st.text_input("VERIFIED HOTEL NAME", value=auto_hotel_name)
             region_idx = REGION_OPTIONS.index(auto_region) if auto_region in REGION_OPTIONS else 0
-            region = st.selectbox("REGION", REGION_OPTIONS, index=region_idx)
-            month_year = st.selectbox("MONTH-YEAR", MONTH_OPTIONS)
-            closing_date = st.date_input("CLOSING DATE", date.today())
+            region = st.selectbox("OPERATING REGION", REGION_OPTIONS, index=region_idx)
             
         with col2:
-            petty_cash_expense = st.number_input("PETTY CASH EXPENSE (£/€)", min_value=0.0, format="%.2f")
-            closing_balance = st.number_input("CLOSING BALANCE AMOUNT (£/€)", min_value=0.0, format="%.2f")
+            month_year = st.selectbox("CLOSING MONTH-YEAR", MONTH_OPTIONS, index=8) # Default Sep-2026
+            closing_date = st.date_input("REPORTING DATE", date.today())
 
-        st.markdown("<div class='pos-section-title'>👤 CONFIRMATION & SIGN-OFF DETAILS</div>", unsafe_allow_html=True)
+        st.markdown("<div class='pos-section-title'>💰 CASH RECONCILIATION & CLOSING FIGURES</div>", unsafe_allow_html=True)
         col3, col4 = st.columns(2)
         with col3:
-            confirmed_by = st.text_input("CONFIRMED BY (PERSON NAME)", placeholder="Enter full name")
+            petty_cash_expense = st.number_input("TOTAL PETTY CASH EXPENSE (£/€)", min_value=0.0, format="%.2f", value=0.0)
         with col4:
-            confirmed_post = st.selectbox("POST / DESIGNATION", POST_OPTIONS)
+            closing_balance = st.number_input("FINAL CLOSING BALANCE AMOUNT (£/€)", min_value=0.0, format="%.2f", value=0.0)
 
-        st.markdown("<div class='pos-section-title'>📎 ATTACHMENTS & REMARKS</div>", unsafe_allow_html=True)
-        uploaded_file = st.file_uploader("UPLOAD ATTACHMENT (PDF / IMAGE / MAIL RECEIPT)", type=["pdf", "png", "jpg", "jpeg", "eml"])
-        notes = st.text_area("ADDITIONAL REMARKS / NOTES", placeholder="Type additional notes here...")
+        st.markdown("<div class='pos-section-title'>✍️ SIGN-OFF & MANAGEMENT AUDIT</div>", unsafe_allow_html=True)
+        col5, col6 = st.columns(2)
+        with col5:
+            confirmed_by = st.text_input("VERIFIED BY (FULL NAME)", placeholder="e.g. John Smith")
+        with col6:
+            confirmed_post = st.selectbox("MANAGEMENT DESIGNATION", POST_OPTIONS)
+
+        st.markdown("<div class='pos-section-title'>📎 SUPPORTING DOCUMENTS & REMARKS</div>", unsafe_allow_html=True)
+        uploaded_file = st.file_uploader("UPLOAD CLOSING RECEIPT / PDF / AUDIT SHEET", type=["pdf", "png", "jpg", "jpeg", "eml"])
+        notes = st.text_area("CLOSING REMARKS / VARIANCE NOTES", placeholder="Type any additional remarks or explanations here...")
         
-        submit_btn = st.form_submit_button("⚡ SUBMIT CASH ENTRY")
+        st.markdown("<br>", unsafe_allow_html=True)
+        submit_btn = st.form_submit_button("💾 SUBMIT MONTH-END CLOSING RECORD")
         
         if submit_btn:
-            if not prism_id_input.strip():
-                st.error("❌ PRISM Property ID is required.")
+            if not prism_id_input.strip() or not hotel_name.strip():
+                st.error("❌ Property ID and Hotel Name are mandatory.")
             else:
                 url = ""
                 if uploaded_file:
@@ -352,7 +359,7 @@ if page == "Submit Month-End Entry":
                         supabase.storage.from_("month_end_attachments").upload(file_path, file_bytes)
                         url = supabase.storage.from_("month_end_attachments").get_public_url(file_path)
                     except Exception as upload_err:
-                        st.warning(f"Attachment Notice: {str(upload_err)}")
+                        st.warning(f"Storage Notice: {str(upload_err)}")
                 
                 payload = {
                     "created_at": datetime.now().isoformat(),
@@ -374,46 +381,47 @@ if page == "Submit Month-End Entry":
                 
                 try:
                     supabase.table("month_end_cash_tracker").insert(payload).execute()
-                    st.success("✅ CASH ENTRY RECORDED SUCCESSFULLY!")
+                    st.success("✅ MONTH-END CLOSING RECORDED & STORED SUCCESSFULLY IN DATABASE!")
                 except Exception as db_err:
-                    st.error(f"❌ Database error: {str(db_err)}")
+                    st.error(f"❌ Database Insertion Error: {str(db_err)}")
 
+# ----------------- 2. CLOSING OVERVIEW & LEDGER -----------------
 elif page == "Closing Overview & Ledger":
     components.html(live_clock_html, height=75)
-    st.markdown("<h3 style='color:#38bdf8; font-family: monospace;'>📊 PETTY CASH LEDGER</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#38bdf8; font-family: monospace;'>📊 MONTH-END CASH LEDGER OVERVIEW</h3>", unsafe_allow_html=True)
     df = fetch_closing_records()
     if not df.empty:
         st.dataframe(df, use_container_width=True)
     else:
-        st.info("No records found in ledger.")
+        st.info("No closing records found in ledger.")
 
-elif page == "Audit & Status Update":
+# ----------------- 3. AUDIT & STATUS MANAGEMENT -----------------
+elif page == "Audit & Status Management":
     components.html(live_clock_html, height=75)
-    st.markdown("<h3 style='color:#38bdf8; font-family: monospace;'>⚙️ AUDIT & STATUS MANAGEMENT</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#38bdf8; font-family: monospace;'>⚙️ CLOSING AUDIT & STATUS PANEL</h3>", unsafe_allow_html=True)
     df = fetch_closing_records()
     if not df.empty:
         st.dataframe(df, use_container_width=True)
     else:
-        st.info("No records available for audit.")
+        st.info("No closing records available for audit.")
 
-elif page == "Month-End Reports":
+# ----------------- 4. MASTER REPORTS & PENDING TRACKER -----------------
+elif page == "Master Reports & Pending":
     components.html(live_clock_html, height=75)
-    st.markdown("<h3 style='color:#38bdf8; font-family: monospace;'>📥 MASTER HOTEL REPORT & PENDING DATA TRACKER</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#38bdf8; font-family: monospace;'>📥 MASTER HOTEL REPORT & MISSING DATA TRACKER</h3>", unsafe_allow_html=True)
     
-    selected_month = st.selectbox("SELECT MONTH-YEAR FOR SUBMISSION CHECK", MONTH_OPTIONS, index=7) # Default Sep-2026
+    selected_month = st.selectbox("SELECT MONTH-YEAR FOR STATUS AUDIT", MONTH_OPTIONS, index=8) # Default Sep-2026
     
     properties_df = fetch_all_properties()
     entries_df = fetch_closing_records()
     
     if not properties_df.empty:
-        # Filter entries for selected month
         if not entries_df.empty and "month_year" in entries_df.columns and "prism_id" in entries_df.columns:
             month_entries = entries_df[entries_df["month_year"] == selected_month]
             submitted_ids = set(month_entries["prism_id"].astype(str).str.strip().str.upper())
         else:
             submitted_ids = set()
 
-        # Map Master properties with submission status
         report_rows = []
         for _, row in properties_df.iterrows():
             p_id = str(row.get("prism_id", "")).strip().upper()
@@ -423,7 +431,6 @@ elif page == "Month-End Reports":
             is_submitted = p_id in submitted_ids
             status_label = "Submitted ✅" if is_submitted else "Pending / Missing ❌"
             
-            # Get submitted details if available
             submitted_by = ""
             closing_balance = 0.0
             if is_submitted and not entries_df.empty:
@@ -444,20 +451,19 @@ elif page == "Month-End Reports":
         
         report_df = pd.DataFrame(report_rows)
         
-        # Summary metrics
         total_hotels = len(report_df)
         submitted_count = len(report_df[report_df["Status"] == "Submitted ✅"])
         pending_count = total_hotels - submitted_count
         
         m1, m2, m3 = st.columns(3)
         m1.metric("Total Master Properties", total_hotels)
-        m2.metric("Submitted Data", submitted_count, delta=f"{int((submitted_count/total_hotels)*100)}%" if total_hotels > 0 else "0%")
+        m2.metric("Submitted Closings", submitted_count, delta=f"{int((submitted_count/total_hotels)*100)}%" if total_hotels > 0 else "0%")
         m3.metric("Pending / Missing Data", pending_count, delta=f"-{pending_count}" if pending_count > 0 else "0", delta_color="inverse")
         
         st.markdown("<br>", unsafe_allow_html=True)
         st.dataframe(report_df, use_container_width=True)
         
         csv = report_df.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 DOWNLOAD STATUS & MASTER REPORT (CSV)", csv, f"master_status_report_{selected_month}.csv", "text/csv")
+        st.download_button("📥 DOWNLOAD MASTER CLOSING REPORT (CSV)", csv, f"master_closing_status_report_{selected_month}.csv", "text/csv")
     else:
-        st.warning("⚠️ No properties found in the 'properties' table. Please check Supabase table name.")
+        st.warning("⚠️ No properties found in the 'properties' table.")
