@@ -18,6 +18,20 @@ except Exception:
 
 st.set_page_config(page_title="PRISM - Month-End POS Terminal", page_icon="💳", layout="wide")
 
+# Persistent Session via Query Params / Session State Sync
+query_params = st.query_params
+if "auth_user" in query_params and not st.session_state.get("authenticated", False):
+    st.session_state.authenticated = True
+    st.session_state.username = query_params.get("auth_user")
+    st.session_state.user_role = query_params.get("auth_role", "Manager")
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "user_role" not in st.session_state:
+    st.session_state.user_role = None
+if "username" not in st.session_state:
+    st.session_state.username = None
+
 # POS Terminal Custom Styling & Focus Glow
 st.markdown("""
     <style>
@@ -165,13 +179,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-if "user_role" not in st.session_state:
-    st.session_state.user_role = None
-if "username" not in st.session_state:
-    st.session_state.username = None
-
 def fetch_closing_records():
     try:
         res = supabase.table("month_end_cash_tracker").select("*").order("id", desc=True).execute()
@@ -239,6 +246,9 @@ with st.sidebar:
         ])
         if st.sidebar.button("🔒 End Terminal Session"):
             st.session_state.authenticated = False
+            st.session_state.username = None
+            st.session_state.user_role = None
+            st.query_params.clear()
             st.rerun()
 
 # ----------------- MANAGER LOGIN SCREEN -----------------
@@ -271,6 +281,10 @@ if not st.session_state.authenticated:
                             st.session_state.authenticated = True
                             st.session_state.username = res.data[0]["username"]
                             st.session_state.user_role = res.data[0].get("role", "Manager")
+                            
+                            # Set persistent query parameters so refresh (F5/Ctrl+R) keeps the user logged in
+                            st.query_params["auth_user"] = st.session_state.username
+                            st.query_params["auth_role"] = st.session_state.user_role
                             st.rerun()
                         else:
                             st.error("❌ Authentication Failed: Invalid Credentials!")
