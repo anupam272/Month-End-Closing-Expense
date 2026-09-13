@@ -16,7 +16,7 @@ except Exception:
     st.error("Supabase Connection Error! Please verify credentials in secrets.")
     st.stop()
 
-st.set_page_config(page_title="SAP NetWeaver - Month-End POS Terminal", page_icon="💼", layout="wide")
+st.set_page_config(page_title="PRISM - Month-End Cash & Expense Portal", page_icon="💷", layout="wide")
 
 # Persistent Session via Query Params / Session State Sync
 query_params = st.query_params
@@ -32,7 +32,7 @@ if "user_role" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state.username = None
 
-# SAP NetWeaver Enterprise Classic Theme Styling
+# Custom Corporate Finance Theme Styling
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap');
@@ -50,7 +50,7 @@ st.markdown("""
         padding-bottom: 2rem !important;
     }
 
-    /* SAP Header styling */
+    /* Enterprise Header styling */
     .pos-header-container {
         display: flex;
         align-items: center;
@@ -68,7 +68,7 @@ st.markdown("""
         font-size: 16px;
         font-weight: 700;
         letter-spacing: 0.5px;
-        color: #d97706; /* SAP Orange accent */
+        color: #1e3a8a;
         background: #ffffff;
         border: 1px solid #cbd5e1;
         border-radius: 3px;
@@ -118,7 +118,7 @@ st.markdown("""
         font-size: 12px !important;
     }
     
-    /* Input Elements Classic SAP Style */
+    /* Input Elements Styling */
     .stTextInput input, .stSelectbox div[data-baseweb="select"], .stNumberInput input, .stDateInput input, .stTextArea textarea {
         border-radius: 3px !important;
         border: 1px solid #94a3b8 !important;
@@ -185,12 +185,12 @@ def fetch_all_properties():
         pass
     return pd.DataFrame()
 
-# Live Clock Bar
+# Live Clock Bar (Updated with Month-End Cash & Expense context)
 live_clock_html = """
 <div class="pos-header-container">
     <div style="display: flex; align-items: center; gap: 12px;">
-        <div class="prism-pos-badge">SAP NetWeaver</div>
-        <div style="color: #475569; font-size: 13px; font-weight: 600;">PRISM UK & Europe Month-End Cash Terminal</div>
+        <div class="prism-pos-badge">PRISM FINANCE</div>
+        <div style="color: #475569; font-size: 13px; font-weight: 600;">UK & Europe Month-End Cash & Expense Portal</div>
     </div>
     <div style="display: flex; align-items: center; gap: 15px;">
         <div class="pos-status-online">PORTAL ACTIVE</div>
@@ -221,9 +221,9 @@ updateClock();
 
 # Sidebar Authentication & Navigation
 with st.sidebar:
-    st.markdown("<div style='font-family: Segoe UI, sans-serif; font-size: 15px; font-weight: 700; color: #1e3a8a; margin-bottom: 10px;'>SAP PORTAL NAVIGATOR</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-family: Segoe UI, sans-serif; font-size: 15px; font-weight: 700; color: #1e3a8a; margin-bottom: 10px;'>FINANCE PORTAL NAVIGATOR</div>", unsafe_allow_html=True)
     if not st.session_state.authenticated:
-        st.markdown("<div style='color: #475569; font-size: 12px;'>Please authenticate to access enterprise modules.</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #475569; font-size: 12px;'>Please sign in to access month-end modules.</div>", unsafe_allow_html=True)
     else:
         st.markdown(f"👤 **User:** {st.session_state.username}")
         st.markdown(f"🔑 **Role:** {st.session_state.user_role}")
@@ -234,14 +234,14 @@ with st.sidebar:
             "Audit & Status Management", 
             "Master Reports & Pending"
         ])
-        if st.sidebar.button("🔒 End Terminal Session"):
+        if st.sidebar.button("🔒 End Session"):
             st.session_state.authenticated = False
             st.session_state.username = None
             st.session_state.user_role = None
             st.query_params.clear()
             st.rerun()
 
-# ----------------- MANAGER LOGIN SCREEN -----------------
+# ----------------- FINANCE LOGIN SCREEN -----------------
 if not st.session_state.authenticated:
     components.html(live_clock_html, height=75)
     st.markdown("<br>", unsafe_allow_html=True)
@@ -250,20 +250,20 @@ if not st.session_state.authenticated:
         with st.form("pos_login_form"):
             st.markdown("""
                 <div style='text-align: center; margin-bottom: 15px;'>
-                    <h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif; margin-bottom: 5px;'>🔐 SAP NETWEAVER LOGIN</h3>
-                    <p style='color:#475569; font-size: 12px;'>Enter enterprise credentials to access portal</p>
+                    <h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif; margin-bottom: 5px;'>🔐 PORTAL SIGN IN</h3>
+                    <p style='color:#475569; font-size: 12px;'>Enter your credentials for Month-End Cash & Expense reconciliation</p>
                 </div>
             """, unsafe_allow_html=True)
             
-            user_input = st.text_input("USER *", placeholder="e.g. admin or finance_uk")
-            pass_input = st.text_input("PASSWORD *", type="password", placeholder="••••••••")
+            user_input = st.text_input("USERNAME", placeholder="e.g. admin or finance_uk")
+            pass_input = st.text_input("PASSWORD", type="password", placeholder="••••••••")
             
             st.markdown("<br>", unsafe_allow_html=True)
-            login_submit = st.form_submit_button("Log On")
+            login_submit = st.form_submit_button("Sign In")
             
             if login_submit:
                 if not user_input.strip() or not pass_input.strip():
-                    st.error("⚠️ Please enter both user and password.")
+                    st.error("⚠️ Please enter both username and password.")
                 else:
                     try:
                         res = supabase.table("userstb").select("*").eq("username", user_input.strip()).execute()
@@ -289,7 +289,7 @@ MONTH_OPTIONS = ["Jan'26", "Feb'26", "Mar'26", "Apr'26", "May'26", "Jun'26", "Ju
 if page == "Submit Month-End Closing":
     components.html(live_clock_html, height=75)
     
-    st.markdown("<h4 style='color: #1e3a8a; font-family: Segoe UI, sans-serif;'>⚡ MONTH-END CASH CLOSING WIZARD</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color: #1e3a8a; font-family: Segoe UI, sans-serif;'>⚡ MONTH-END CASH & EXPENSE CLOSING WIZARD</h4>", unsafe_allow_html=True)
     st.markdown("<div style='color: #475569; font-size: 12px; margin-bottom: 12px;'>Enter PRISM Property ID, Hotel Name, and Region manually below.</div>", unsafe_allow_html=True)
 
     with st.form("cash_closing_form", clear_on_submit=False):
@@ -304,12 +304,12 @@ if page == "Submit Month-End Closing":
         with col2:
             month_year = st.selectbox("CLOSING MONTH-YEAR", MONTH_OPTIONS, index=8) # Default Sep'26
 
-        st.markdown("<div class='pos-section-title'>💰 CASH RECONCILIATION & CLOSING FIGURES</div>", unsafe_allow_html=True)
+        st.markdown("<div class='pos-section-title'>💰 CASH RECONCILIATION & MONTHLY EXPENSES</div>", unsafe_allow_html=True)
         col3, col4 = st.columns(2)
         with col3:
             petty_cash_expense = st.number_input("TOTAL PETTY CASH EXPENSE (£/€)", min_value=0.0, format="%.2f", value=0.0)
         with col4:
-            closing_balance = st.number_input("FINAL CLOSING BALANCE AMOUNT (£/€)", min_value=0.0, format="%.2f", value=0.0)
+            closing_balance = st.number_input("FINAL CLOSING CASH BALANCE (£/€)", min_value=0.0, format="%.2f", value=0.0)
 
         st.markdown("<div class='pos-section-title'>✍️ SIGN-OFF & MANAGEMENT AUDIT</div>", unsafe_allow_html=True)
         col5, col6 = st.columns(2)
@@ -364,7 +364,7 @@ if page == "Submit Month-End Closing":
 # ----------------- 2. CLOSING OVERVIEW & LEDGER -----------------
 elif page == "Closing Overview & Ledger":
     components.html(live_clock_html, height=75)
-    st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>📊 MONTH-END CASH LEDGER OVERVIEW</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>📊 MONTH-END CASH & EXPENSE LEDGER OVERVIEW</h3>", unsafe_allow_html=True)
     df = fetch_closing_records()
     if not df.empty:
         st.dataframe(df, use_container_width=True)
