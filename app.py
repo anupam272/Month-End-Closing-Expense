@@ -32,7 +32,7 @@ if "user_role" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state.username = None
 
-# Custom Corporate Finance Theme Styling with Flexbox Header Fix
+# Custom Corporate Finance Theme Styling with prismlife.com Logo Style
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700;800&display=swap');
@@ -64,18 +64,20 @@ st.markdown("""
         box-sizing: border-box;
     }
 
-    .prism-logo-box {
+    /* Exact prismlife.com stylized outline logo match */
+    .prism-life-logo {
         font-family: 'Segoe UI', sans-serif;
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 800;
-        letter-spacing: 3px;
+        letter-spacing: 4px;
         color: #1e3a8a;
-        background: #ffffff;
-        border: 2px solid #1e3a8a;
+        background: transparent;
+        border: 2.5px solid #1e3a8a;
         border-radius: 4px;
         padding: 2px 10px;
         display: inline-block;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        box-shadow: inset 0 0 0 1px #1e3a8a;
+        text-transform: uppercase;
     }
 
     .pos-status-online {
@@ -174,17 +176,15 @@ def fetch_hotel_master():
         pass
     return pd.DataFrame()
 
-# Live Clock Bar with Official PRISM Logo Style
+# Live Clock Bar with Official prismlife.com Outline Logo Style
 live_clock_html = """
 <div class="pos-header-container">
     <div style="display: flex; align-items: center; gap: 12px;">
-        <span class="prism-logo-box">PRISM</span>
-        <span style="color: #334155; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">FINANCE PORTAL</span>
-        <span style="color: #cbd5e1;">|</span>
-        <span class="pos-status-online">PORTAL ACTIVE</span>
+        <span class="prism-life-logo">PRISM</span>
+        <span style="color: #334155; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">UK & EUROPE PORTAL ACTIVE</span>
     </div>
     <div style="display: flex; align-items: center; gap: 15px; text-align: right;">
-        <span style="color: #475569; font-size: 12px; font-weight: 600;">UK & Europe Month-End Cash & Expense Portal</span>
+        <span style="color: #475569; font-size: 12px; font-weight: 600;">Month-End Cash & Expense Portal</span>
         <span style="color: #94a3b8; font-size: 12px; font-weight: 600;">|</span>
         <span id="live-clock" style="font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 600; color: #1e293b;">Loading...</span>
     </div>
@@ -302,13 +302,12 @@ if page == "Submit Month-End Closing":
                         st.session_state.auto_region = reg
                 else:
                     st.session_state.auto_hotel_name = "Not Found in Hotel Master"
-        st.rerun()
 
     col1_lookup, col2_lookup = st.columns(2)
     with col1_lookup:
         prism_id_input = st.text_input(
             "PRISM PROPERTY ID (AUTO-LOOKUP)", 
-            placeholder="e.g. UK001", 
+            placeholder="e.g. DE_SCHOO02", 
             key="prism_input_val", 
             on_change=handle_prism_id_change
         )
