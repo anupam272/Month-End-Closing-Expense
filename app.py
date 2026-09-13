@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, date, time
 from supabase import create_client, Client
+import streamlit.components.v1 as components
 
 @st.cache_resource
 def init_supabase() -> Client:
@@ -17,7 +18,7 @@ except Exception:
 
 st.set_page_config(page_title="Petty Cash Management Portal", page_icon="📈", layout="wide")
 
-# Custom CSS matching exact screenshot UI
+# Custom UI Styling
 st.markdown("""
     <style>
     .stApp { background-color: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -25,65 +26,57 @@ st.markdown("""
     footer {visibility: hidden !important;}
     header {visibility: hidden;}
     
-    /* Top Time Badge Styling */
-    .time-badge {
+    /* PRISM Exact Logo Box Styling */
+    .prism-box-logo {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        color: #3b82f6;
-        font-size: 13px;
-        font-weight: 500;
-        margin-bottom: 6px;
-    }
-    
-    /* Portal Title Header Header */
-    .portal-header-container {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 25px;
-    }
-    .prism-title-logo {
+        justify-content: center;
         font-family: 'Arial Black', sans-serif;
-        font-size: 32px;
-        font-weight: 900;
-        letter-spacing: -1px;
-        color: #1e293b;
-        border: 2px solid #1e293b;
-        padding: 0px 8px;
-        border-radius: 6px;
-        line-height: 1.1;
-    }
-    .portal-title-text {
         font-size: 26px;
-        font-weight: 600;
+        font-weight: 900;
+        letter-spacing: 1px;
         color: #1e293b;
-        margin: 0;
+        border: 2.5px solid #1e293b;
+        border-radius: 8px;
+        padding: 2px 12px;
+        line-height: 1;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
-    /* Sidebar Styling */
-    section[data-testid="stSidebar"] { background-color: #1c2b36; color: #ffffff; }
-    section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] label { color: #94a3b8 !important; }
-    
-    .sidebar-logo {
+    .sidebar-prism-logo {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         font-family: 'Arial Black', sans-serif;
-        font-size: 28px;
+        font-size: 24px;
         font-weight: 900;
-        letter-spacing: -1px;
+        letter-spacing: 1px;
         color: #ffffff;
         border: 2px solid #ffffff;
-        padding: 2px 10px;
         border-radius: 6px;
-        display: inline-block;
+        padding: 4px 12px;
+        line-height: 1;
         margin-bottom: 8px;
     }
+
+    /* Portal Title Text */
+    .portal-title-text {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-left: 15px;
+    }
+
+    /* Sidebar Theme */
+    section[data-testid="stSidebar"] { background-color: #1c2b36; color: #ffffff; }
+    section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] label { color: #94a3b8 !important; }
     .sidebar-subtitle {
         color: #94a3b8 !important;
-        font-size: 12px;
+        font-size: 13px;
         margin-bottom: 20px;
     }
 
-    /* Form Card Styling */
+    /* Form Container */
     div[data-testid="stForm"] {
         background: #ffffff;
         border: 1px solid #e2e8f0;
@@ -119,16 +112,41 @@ def fetch_closing_records():
     except Exception:
         return pd.DataFrame()
 
-# Current Time Stamp
-current_time_str = datetime.now().strftime("%d %b %Y, %I:%M:%S %p").lower()
+# JavaScript Real-Time Live Ticking Clock Component
+live_clock_html = """
+<div id="clock-container" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 500; color: #3b82f6; display: flex; align-items: center; gap: 6px;">
+    <span>📅</span> <span id="live-clock">Loading live time...</span>
+</div>
 
-# Sidebar Rendering
+<script>
+function updateClock() {
+    const now = new Date();
+    const options = { day: '2-digit', month: 'short', year: 'numeric' };
+    const dateStr = now.toLocaleDateString('en-GB', options);
+    
+    let hours = now.getHours();
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const hoursStr = String(hours).padStart(2, '0');
+
+    const formattedTime = dateStr + ", " + hoursStr + ":" + minutes + ":" + seconds + " " + ampm;
+    document.getElementById('live-clock').innerText = formattedTime;
+}
+setInterval(updateClock, 1000);
+updateClock();
+</script>
+"""
+
+# Sidebar Layout
 with st.sidebar:
-    st.markdown("<div class='sidebar-logo'>PRISM</div>", unsafe_allow_html=True)
+    st.markdown("<div class='sidebar-prism-logo'>PRISM</div>", unsafe_allow_html=True)
     if not st.session_state.authenticated:
         st.markdown("<div class='sidebar-subtitle'>Please log in to access system modules.</div>", unsafe_allow_html=True)
     else:
-        st.markdown(f"👤 **Logged User:** {st.session_state.username}", unsafe_allow_html=True)
+        st.markdown(f"👤 **User:** {st.session_state.username}", unsafe_allow_html=True)
         st.markdown(f"🔑 **Role:** {st.session_state.user_role}", unsafe_allow_html=True)
         st.markdown("---")
         page = st.sidebar.radio("Navigation Menu", [
@@ -141,24 +159,24 @@ with st.sidebar:
             st.session_state.authenticated = False
             st.rerun()
 
-# Authentication Page UI
+# Login Header Section
 if not st.session_state.authenticated:
-    # Blue Dynamic Time Pill
-    st.markdown(f"""
-        <div class="time-badge">
-            🗓️ {current_time_str}
-        </div>
-        <div class="portal-header-container">
-            <div class="prism-title-logo">PRISM</div>
+    # Live Clock Execution
+    components.html(live_clock_html, height=30)
+    
+    # Title Header with Logo Box
+    st.markdown("""
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <div class="prism-box-logo">PRISM</div>
             <div class="portal-title-text">Petty Cash Management Portal</div>
         </div>
-        <hr style="margin-top: 0; margin-bottom: 40px; border-color: #e2e8f0;">
+        <hr style="margin-top: 0; margin-bottom: 35px; border: 0; border-top: 1px solid #e2e8f0;">
     """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1, 1.2, 1])
+    col1, col2, col3 = st.columns([1, 1.1, 1])
     with col2:
         with st.form("login_form"):
-            st.markdown("<h3 style='margin-bottom:20px;'>🔒 Secure Sign In</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin-bottom:20px; color:#1e293b;'>🔒 Secure Sign In</h3>", unsafe_allow_html=True)
             user_input = st.text_input("Username")
             pass_input = st.text_input("Password", type="password")
             submit = st.form_submit_button("Login")
@@ -177,13 +195,14 @@ if not st.session_state.authenticated:
                     st.error(f"Error: {str(err)}")
     st.stop()
 
-# Post-Login Pages
+# Post-Login Dynamic Dashboard Pages
 REGION_OPTIONS = ["UK", "Europe"]
 CATEGORY_OPTIONS = ["Petty Cash Closing Balance", "Cash at Hotel", "Vendor Cash Settlement", "Bank & Card Adjustments", "Operational Expenses"]
 STATUS_OPTIONS = ["Submitted", "Under Review", "Approved", "Rejected"]
 
 if page == "Closing Overview & Ledger":
-    st.markdown(f"### 📊 Petty Cash Ledger ({current_time_str})")
+    components.html(live_clock_html, height=30)
+    st.markdown("### 📊 Petty Cash Ledger")
     df = fetch_closing_records()
     if not df.empty:
         st.dataframe(df, use_container_width=True)
@@ -191,6 +210,7 @@ if page == "Closing Overview & Ledger":
         st.info("No records found.")
 
 elif page == "Submit Month-End Entry":
+    components.html(live_clock_html, height=30)
     st.markdown("### 📝 Submit Cash Entry")
     with st.form("cash_form"):
         col1, col2 = st.columns(2)
