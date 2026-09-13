@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, date
 from supabase import create_client, Client
-import streamlit.components.v1 as components
 
 @st.cache_resource
 def init_supabase() -> Client:
@@ -80,24 +79,6 @@ st.markdown("""
         text-transform: uppercase;
     }
 
-    .pos-status-online {
-        font-family: 'Segoe UI', sans-serif;
-        color: #15803d;
-        font-size: 12px;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .pos-status-online::before {
-        content: '';
-        width: 8px;
-        height: 8px;
-        background-color: #16a34a;
-        border-radius: 50%;
-        display: inline-block;
-    }
-
     section[data-testid="stSidebar"] { 
         background-color: #e2e8f0; 
         border-right: 1px solid #cbd5e1;
@@ -106,7 +87,7 @@ st.markdown("""
         color: #1e293b !important; 
     }
 
-    div[data-testid="stForm"] {
+    .custom-card {
         background: #f1f5f9;
         border: 1px solid #cbd5e1;
         border-radius: 6px;
@@ -176,40 +157,23 @@ def fetch_hotel_master():
         pass
     return pd.DataFrame()
 
-# Live Clock Bar with Official prismlife.com Outline Logo Style
-live_clock_html = """
-<div class="pos-header-container">
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <span class="prism-life-logo">PRISM</span>
-        <span style="color: #334155; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">UK & EUROPE PORTAL ACTIVE</span>
+# Live Clock Bar with Official prismlife.com Outline Logo Style (Rendered directly via st.markdown)
+def render_header():
+    now_str = datetime.now().strftime("%d %b %Y | %I:%M:%S %p")
+    header_html = f"""
+    <div class="pos-header-container">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="prism-life-logo">PRISM</span>
+            <span style="color: #334155; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">UK & EUROPE PORTAL ACTIVE</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px; text-align: right;">
+            <span style="color: #475569; font-size: 12px; font-weight: 600;">Month-End Cash & Expense Portal</span>
+            <span style="color: #94a3b8; font-size: 12px; font-weight: 600;">|</span>
+            <span style="font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 600; color: #1e293b;">{now_str}</span>
+        </div>
     </div>
-    <div style="display: flex; align-items: center; gap: 15px; text-align: right;">
-        <span style="color: #475569; font-size: 12px; font-weight: 600;">Month-End Cash & Expense Portal</span>
-        <span style="color: #94a3b8; font-size: 12px; font-weight: 600;">|</span>
-        <span id="live-clock" style="font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 600; color: #1e293b;">Loading...</span>
-    </div>
-</div>
-
-<script>
-function updateClock() {
-    const now = new Date();
-    const options = { day: '2-digit', month: 'short', year: 'numeric' };
-    const dateStr = now.toLocaleDateString('en-GB', options);
-    
-    let hours = now.getHours();
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    const hoursStr = String(hours).padStart(2, '0');
-
-    document.getElementById('live-clock').innerText = dateStr + " | " + hoursStr + ":" + minutes + ":" + seconds + " " + ampm;
-}
-setInterval(updateClock, 1000);
-updateClock();
-</script>
-"""
+    """
+    st.markdown(header_html, unsafe_allow_html=True)
 
 # Sidebar Authentication & Navigation
 with st.sidebar:
@@ -235,7 +199,7 @@ with st.sidebar:
 
 # ----------------- FINANCE LOGIN SCREEN -----------------
 if not st.session_state.authenticated:
-    components.html(live_clock_html, height=60)
+    render_header()
     st.markdown("<br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
@@ -279,11 +243,12 @@ MONTH_OPTIONS = ["Jan'26", "Feb'26", "Mar'26", "Apr'26", "May'26", "Jun'26", "Ju
 
 # ----------------- 1. SUBMIT MONTH-END CLOSING TERMINAL -----------------
 if page == "Submit Month-End Closing":
-    components.html(live_clock_html, height=60)
+    render_header()
     
     st.markdown("<h4 style='color: #1e3a8a; font-family: Segoe UI, sans-serif;'>⚡ MONTH-END CASH & EXPENSE CLOSING WIZARD</h4>", unsafe_allow_html=True)
     st.markdown("<div style='color: #475569; font-size: 12px; margin-bottom: 12px;'>Enter PRISM Property ID to auto-fetch Hotel Name and Region from Hotel Master.</div>", unsafe_allow_html=True)
 
+    # Initialize session states for auto-fetching
     if "auto_hotel_name" not in st.session_state:
         st.session_state.auto_hotel_name = ""
     if "auto_region" not in st.session_state:
@@ -303,18 +268,21 @@ if page == "Submit Month-End Closing":
                 else:
                     st.session_state.auto_hotel_name = "Not Found in Hotel Master"
 
-    col1_lookup, col2_lookup = st.columns(2)
-    with col1_lookup:
-        prism_id_input = st.text_input(
-            "PRISM PROPERTY ID (AUTO-LOOKUP)", 
-            placeholder="e.g. DE_SCHOO02", 
-            key="prism_input_val", 
-            on_change=handle_prism_id_change
-        )
-    with col2_lookup:
-        month_year = st.selectbox("CLOSING MONTH-YEAR", MONTH_OPTIONS, index=8)
+    # Use a clean container instead of st.form to enable instant reactive auto-fetching
+    with st.container():
+        st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+        
+        col1_lookup, col2_lookup = st.columns(2)
+        with col1_lookup:
+            prism_id_input = st.text_input(
+                "PRISM PROPERTY ID (AUTO-LOOKUP)", 
+                placeholder="e.g. DE_SCHOO02", 
+                key="prism_input_val", 
+                on_change=handle_prism_id_change
+            )
+        with col2_lookup:
+            month_year = st.selectbox("CLOSING MONTH-YEAR", MONTH_OPTIONS, index=8)
 
-    with st.form("cash_closing_form", clear_on_submit=False):
         st.markdown("<div class='pos-section-title'>🏢 PROPERTY & IDENTIFICATION DETAILS</div>", unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
@@ -343,7 +311,7 @@ if page == "Submit Month-End Closing":
         notes = st.text_area("CLOSING REMARKS / VARIANCE NOTES", placeholder="Type any additional remarks or explanations here...")
         
         st.markdown("<br>", unsafe_allow_html=True)
-        submit_btn = st.form_submit_button("💾 SUBMIT MONTH-END CLOSING RECORD")
+        submit_btn = st.button("💾 SUBMIT MONTH-END CLOSING RECORD")
         
         if submit_btn:
             if not prism_id_input.strip() or not hotel_name.strip():
@@ -382,10 +350,11 @@ if page == "Submit Month-End Closing":
                     st.success("✅ MONTH-END CLOSING RECORDED & STORED SUCCESSFULLY IN DATABASE!")
                 except Exception as db_err:
                     st.error(f"❌ Database Insertion Error: {str(db_err)}")
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # ----------------- 2. CLOSING OVERVIEW & LEDGER -----------------
 elif page == "Closing Overview & Ledger":
-    components.html(live_clock_html, height=60)
+    render_header()
     st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>📊 MONTH-END CASH & EXPENSE LEDGER OVERVIEW</h3>", unsafe_allow_html=True)
     df = fetch_closing_records()
     if not df.empty:
@@ -395,7 +364,7 @@ elif page == "Closing Overview & Ledger":
 
 # ----------------- 3. AUDIT & STATUS MANAGEMENT -----------------
 elif page == "Audit & Status Management":
-    components.html(live_clock_html, height=60)
+    render_header()
     st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>⚙️ CLOSING AUDIT & STATUS PANEL</h3>", unsafe_allow_html=True)
     df = fetch_closing_records()
     if not df.empty:
@@ -405,7 +374,7 @@ elif page == "Audit & Status Management":
 
 # ----------------- 4. MASTER REPORTS & PENDING TRACKER -----------------
 elif page == "Master Reports & Pending":
-    components.html(live_clock_html, height=60)
+    render_header()
     st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>📥 MASTER HOTEL REPORT & MISSING DATA TRACKER</h3>", unsafe_allow_html=True)
     
     selected_month = st.selectbox("SELECT MONTH-YEAR FOR STATUS AUDIT", MONTH_OPTIONS, index=8)
