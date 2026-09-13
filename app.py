@@ -50,7 +50,6 @@ st.markdown("""
         padding-bottom: 2rem !important;
     }
 
-    /* Enterprise Header Styling with Flexbox Layout */
     .pos-header-container {
         display: flex !important;
         align-items: center !important;
@@ -97,7 +96,6 @@ st.markdown("""
         display: inline-block;
     }
 
-    /* Sidebar Customization */
     section[data-testid="stSidebar"] { 
         background-color: #e2e8f0; 
         border-right: 1px solid #cbd5e1;
@@ -106,7 +104,6 @@ st.markdown("""
         color: #1e293b !important; 
     }
 
-    /* Main Form & Container Box */
     div[data-testid="stForm"] {
         background: #f1f5f9;
         border: 1px solid #cbd5e1;
@@ -115,14 +112,12 @@ st.markdown("""
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
 
-    /* Input Field Labels */
     .stTextInput > label, .stSelectbox > label, .stNumberInput > label, .stDateInput > label, .stTextArea > label, .stFileUploader > label {
         font-weight: 600 !important;
         color: #334155 !important;
         font-size: 12px !important;
     }
     
-    /* Input Elements Styling */
     .stTextInput input, .stSelectbox div[data-baseweb="select"], .stNumberInput input, .stDateInput input, .stTextArea textarea {
         border-radius: 3px !important;
         border: 1px solid #94a3b8 !important;
@@ -131,16 +126,6 @@ st.markdown("""
         font-family: 'Segoe UI', sans-serif !important;
     }
 
-    /* Active Input Focus */
-    .stTextInput input:focus, 
-    .stSelectbox div[data-baseweb="select"]:focus-within, 
-    .stNumberInput input:focus, 
-    .stTextArea textarea:focus {
-        border-color: #2563eb !important;
-        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
-    }
-
-    /* Action Button */
     .stButton>button {
         background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
         color: #ffffff;
@@ -180,16 +165,16 @@ def fetch_closing_records():
     except Exception:
         return pd.DataFrame()
 
-def fetch_all_properties():
+def fetch_hotel_master():
     try:
-        res = supabase.table("properties").select("*").execute()
+        res = supabase.table("hotel_master").select("*").execute()
         if res.data:
             return pd.DataFrame(res.data)
     except Exception:
         pass
     return pd.DataFrame()
 
-# Live Clock Bar with Robust Left-Right Alignment
+# Live Clock Bar
 live_clock_html = """
 <div class="pos-header-container">
     <div style="display: flex; align-items: center; gap: 10px;">
@@ -295,19 +280,50 @@ if page == "Submit Month-End Closing":
     components.html(live_clock_html, height=60)
     
     st.markdown("<h4 style='color: #1e3a8a; font-family: Segoe UI, sans-serif;'>⚡ MONTH-END CASH & EXPENSE CLOSING WIZARD</h4>", unsafe_allow_html=True)
-    st.markdown("<div style='color: #475569; font-size: 12px; margin-bottom: 12px;'>Enter PRISM Property ID, Hotel Name, and Region manually below.</div>", unsafe_allow_html=True)
+    st.markdown("<div style='color: #475569; font-size: 12px; margin-bottom: 12px;'>Enter PRISM Property ID to auto-fetch Hotel Name and Region from Hotel Master.</div>", unsafe_allow_html=True)
 
+    # Session states for auto-filling
+    if "auto_hotel_name" not in st.session_state:
+        st.session_state.auto_hotel_name = ""
+    if "auto_region" not in st.session_state:
+        st.session_state.auto_region = "UK"
+
+    def handle_prism_id_change():
+        entered_id = st.session_state.get("prism_input_val", "").strip().upper()
+        if entered_id:
+            master_df = fetch_hotel_master()
+            if not master_df.empty and "prism_id" in master_df.columns:
+                matched = master_df[master_df["prism_id"].astype(str).str.strip().str.upper() == entered_id]
+                if not matched.empty:
+                    st.session_state.auto_hotel_name = matched.iloc[0].get("property_name", "")
+                    reg = matched.iloc[0].get("property_region", "UK")
+                    if reg in REGION_OPTIONS:
+                        st.session_state.auto_region = reg
+                else:
+                    st.session_state.auto_hotel_name = "Not Found in Hotel Master"
+
+    # Outside form container for live instant lookup on typing/blur
+    col1_lookup, col2_lookup = st.columns(2)
+    with col1_lookup:
+        prism_id_input = st.text_input(
+            "PRISM PROPERTY ID (AUTO-LOOKUP)", 
+            placeholder="e.g. UK001", 
+            key="prism_input_val", 
+            on_change=handle_prism_id_change
+        )
+    with col2_lookup:
+        month_year = st.selectbox("CLOSING MONTH-YEAR", MONTH_OPTIONS, index=8)
+
+    # Actual Form Submission Block
     with st.form("cash_closing_form", clear_on_submit=False):
-        st.markdown("<div class='pos-section-title'>🏢 PROPERTY & PERIOD IDENTIFICATION</div>", unsafe_allow_html=True)
-        col1, col2 = st.columns(2)
+        st.markdown("<div class='pos-section-title'>🏢 PROPERTY & IDENTIFICATION DETAILS</div>", unsafe_allow_html=True)
         
+        col1, col2 = st.columns(2)
         with col1:
-            prism_id_input = st.text_input("PRISM PROPERTY ID (MANUAL ENTRY)", placeholder="e.g. UK001 or LONHOTEL")
-            hotel_name = st.text_input("HOTEL NAME", placeholder="e.g. OYO Townhouse London")
-            region = st.selectbox("OPERATING REGION", REGION_OPTIONS)
-            
+            hotel_name = st.text_input("HOTEL NAME", value=st.session_state.auto_hotel_name, placeholder="Auto-populated from ID")
         with col2:
-            month_year = st.selectbox("CLOSING MONTH-YEAR", MONTH_OPTIONS, index=8) # Default Sep'26
+            default_reg_idx = REGION_OPTIONS.index(st.session_state.auto_region) if st.session_state.auto_region in REGION_OPTIONS else 0
+            region = st.selectbox("OPERATING REGION", REGION_OPTIONS, index=default_reg_idx)
 
         st.markdown("<div class='pos-section-title'>💰 CASH RECONCILIATION & MONTHLY EXPENSES</div>", unsafe_allow_html=True)
         col3, col4 = st.columns(2)
@@ -338,14 +354,13 @@ if page == "Submit Month-End Closing":
                 if uploaded_file:
                     try:
                         file_bytes = uploaded_file.read()
-                        file_path = f"{prism_id_input.strip()}/{month_year}_{uploaded_file.name}"
+                        file_path = f"{prism_id_input.strip().upper()}/{month_year}_{uploaded_file.name}"
                         supabase.storage.from_("month_end_attachments").upload(file_path, file_bytes)
                         url = supabase.storage.from_("month_end_attachments").get_public_url(file_path)
                     except Exception as upload_err:
                         st.warning(f"Storage Notice: {str(upload_err)}")
                 
                 payload = {
-                    "created_at": datetime.now().isoformat(),
                     "submitted_by": st.session_state.username,
                     "prism_id": prism_id_input.strip().upper(),
                     "hotel_name": hotel_name,
@@ -353,11 +368,14 @@ if page == "Submit Month-End Closing":
                     "month_year": month_year,
                     "petty_cash_expense": petty_cash_expense,
                     "closing_balance": closing_balance,
+                    "closing_cash_balance": closing_balance,
                     "confirmed_by": confirmed_by,
                     "confirmed_post": confirmed_post,
                     "notes": notes,
                     "attachment_url": url,
-                    "status": "Submitted"
+                    "mail_proof_url": url,
+                    "status": "Submitted",
+                    "submitted_at": datetime.now().isoformat()
                 }
                 
                 try:
@@ -391,9 +409,9 @@ elif page == "Master Reports & Pending":
     components.html(live_clock_html, height=60)
     st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>📥 MASTER HOTEL REPORT & MISSING DATA TRACKER</h3>", unsafe_allow_html=True)
     
-    selected_month = st.selectbox("SELECT MONTH-YEAR FOR STATUS AUDIT", MONTH_OPTIONS, index=8) # Default Sep'26
+    selected_month = st.selectbox("SELECT MONTH-YEAR FOR STATUS AUDIT", MONTH_OPTIONS, index=8)
     
-    properties_df = fetch_all_properties()
+    properties_df = fetch_hotel_master()
     entries_df = fetch_closing_records()
     
     if not properties_df.empty:
@@ -447,4 +465,4 @@ elif page == "Master Reports & Pending":
         csv = report_df.to_csv(index=False).encode('utf-8')
         st.download_button("📥 DOWNLOAD MASTER CLOSING REPORT (CSV)", csv, f"master_closing_status_report_{selected_month}.csv", "text/csv")
     else:
-        st.warning("⚠️ No properties found in the 'properties' table.")
+        st.warning("⚠️ No properties found in the 'hotel_master' table.")
