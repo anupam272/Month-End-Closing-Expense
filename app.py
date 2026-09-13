@@ -32,7 +32,7 @@ if "user_role" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state.username = None
 
-# Custom Corporate Finance Theme Styling
+# Custom Corporate Finance Theme Styling with Flexbox Header Fix
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap');
@@ -50,30 +50,33 @@ st.markdown("""
         padding-bottom: 2rem !important;
     }
 
-    /* Enterprise Header styling */
+    /* Enterprise Header Styling with Flexbox Layout */
     .pos-header-container {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
         background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
-        padding: 10px 20px;
+        padding: 12px 20px;
         border-radius: 4px;
         border: 1px solid #94a3b8;
         margin-bottom: 15px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .prism-pos-badge {
         font-family: 'Segoe UI', sans-serif;
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         letter-spacing: 0.5px;
         color: #1e3a8a;
         background: #ffffff;
         border: 1px solid #cbd5e1;
         border-radius: 3px;
-        padding: 4px 10px;
+        padding: 3px 10px;
         display: inline-block;
+        margin-right: 10px;
     }
 
     .pos-status-online {
@@ -81,7 +84,7 @@ st.markdown("""
         color: #15803d;
         font-size: 12px;
         font-weight: 600;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 6px;
     }
@@ -91,6 +94,7 @@ st.markdown("""
         height: 8px;
         background-color: #16a34a;
         border-radius: 50%;
+        display: inline-block;
     }
 
     /* Sidebar Customization */
@@ -149,7 +153,7 @@ st.markdown("""
         box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
     .stButton>button:hover {
-        background: linear-gradient(to bottom, #2563eb, #1e40af);
+        background: linear-gradient(to bottom, #2563eb, #1d4ed8);
     }
 
     .pos-section-title {
@@ -185,16 +189,17 @@ def fetch_all_properties():
         pass
     return pd.DataFrame()
 
-# Live Clock Bar (Updated with Month-End Cash & Expense context)
+# Live Clock Bar with Robust Left-Right Alignment
 live_clock_html = """
 <div class="pos-header-container">
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <div class="prism-pos-badge">PRISM FINANCE</div>
-        <div style="color: #475569; font-size: 13px; font-weight: 600;">UK & Europe Month-End Cash & Expense Portal</div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="prism-pos-badge">PRISM FINANCE</span>
+        <span class="pos-status-online">PORTAL ACTIVE</span>
     </div>
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <div class="pos-status-online">PORTAL ACTIVE</div>
-        <div id="live-clock" style="font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 600; color: #1e293b;">Loading...</div>
+    <div style="display: flex; align-items: center; gap: 15px; text-align: right;">
+        <span style="color: #334155; font-size: 13px; font-weight: 600;">UK & Europe Month-End Cash & Expense Portal</span>
+        <span style="color: #64748b; font-size: 12px; font-weight: 600;">|</span>
+        <span id="live-clock" style="font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 600; color: #1e293b;">Loading...</span>
     </div>
 </div>
 
@@ -243,7 +248,7 @@ with st.sidebar:
 
 # ----------------- FINANCE LOGIN SCREEN -----------------
 if not st.session_state.authenticated:
-    components.html(live_clock_html, height=75)
+    components.html(live_clock_html, height=60)
     st.markdown("<br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
@@ -287,7 +292,7 @@ MONTH_OPTIONS = ["Jan'26", "Feb'26", "Mar'26", "Apr'26", "May'26", "Jun'26", "Ju
 
 # ----------------- 1. SUBMIT MONTH-END CLOSING TERMINAL -----------------
 if page == "Submit Month-End Closing":
-    components.html(live_clock_html, height=75)
+    components.html(live_clock_html, height=60)
     
     st.markdown("<h4 style='color: #1e3a8a; font-family: Segoe UI, sans-serif;'>⚡ MONTH-END CASH & EXPENSE CLOSING WIZARD</h4>", unsafe_allow_html=True)
     st.markdown("<div style='color: #475569; font-size: 12px; margin-bottom: 12px;'>Enter PRISM Property ID, Hotel Name, and Region manually below.</div>", unsafe_allow_html=True)
@@ -363,7 +368,7 @@ if page == "Submit Month-End Closing":
 
 # ----------------- 2. CLOSING OVERVIEW & LEDGER -----------------
 elif page == "Closing Overview & Ledger":
-    components.html(live_clock_html, height=75)
+    components.html(live_clock_html, height=60)
     st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>📊 MONTH-END CASH & EXPENSE LEDGER OVERVIEW</h3>", unsafe_allow_html=True)
     df = fetch_closing_records()
     if not df.empty:
@@ -373,7 +378,7 @@ elif page == "Closing Overview & Ledger":
 
 # ----------------- 3. AUDIT & STATUS MANAGEMENT -----------------
 elif page == "Audit & Status Management":
-    components.html(live_clock_html, height=75)
+    components.html(live_clock_html, height=60)
     st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>⚙️ CLOSING AUDIT & STATUS PANEL</h3>", unsafe_allow_html=True)
     df = fetch_closing_records()
     if not df.empty:
@@ -383,7 +388,7 @@ elif page == "Audit & Status Management":
 
 # ----------------- 4. MASTER REPORTS & PENDING TRACKER -----------------
 elif page == "Master Reports & Pending":
-    components.html(live_clock_html, height=75)
+    components.html(live_clock_html, height=60)
     st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>📥 MASTER HOTEL REPORT & MISSING DATA TRACKER</h3>", unsafe_allow_html=True)
     
     selected_month = st.selectbox("SELECT MONTH-YEAR FOR STATUS AUDIT", MONTH_OPTIONS, index=8) # Default Sep'26
