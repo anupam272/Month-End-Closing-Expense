@@ -143,13 +143,27 @@ def render_header():
     
     col_logo, col_title, col_time = st.columns([1.2, 3, 1.5])
     with col_logo:
-        logo_filename = "logoprism_2.png"
-        if os.path.exists(logo_filename):
-            st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-            st.image(logo_filename, width=130)
-            st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            st.error(f"⚠️ Missing: {logo_filename} in root folder!")
+        logo_paths = [
+            r"Downloads\logoprism.png",
+            r"C:\Users\User\Downloads\logoprism.png",
+            "logoprism.png",
+            "logoprism_2.png"
+        ]
+        
+        loaded = False
+        for path in logo_paths:
+            if os.path.exists(path):
+                try:
+                    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+                    st.image(path, width=130)
+                    st.markdown('</div>', unsafe_allow_html=True)
+                    loaded = True
+                    break
+                except Exception:
+                    pass
+        
+        if not loaded:
+            st.markdown("<h3 style='color:#1e3a8a; margin:0;'>PRISM</h3>", unsafe_allow_html=True)
             
     with col_title:
         st.markdown("<div style='text-align: center;'><span style='color: #1e3a8a; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;'>Month-End Cash & Expense Portal (UK & Europe Operations)</span></div>", unsafe_allow_html=True)
@@ -307,6 +321,7 @@ if page == "Submit Month-End Closing":
                     except Exception as upload_err:
                         st.warning(f"Storage Notice: {str(upload_err)}")
                 
+                # Payload perfectly matched with your Supabase column schema
                 payload = {
                     "submitted_by": st.session_state.username,
                     "prism_id": prism_id_input.strip().upper(),
@@ -314,15 +329,16 @@ if page == "Submit Month-End Closing":
                     "region": region,
                     "month_year": month_year,
                     "petty_cash_expense": petty_cash_expense,
+                    "total_monthly_expense": petty_cash_expense,
                     "closing_balance": closing_balance,
                     "closing_cash_balance": closing_balance,
+                    "fine_amount": 0.0,
                     "confirmed_by": confirmed_by,
                     "confirmed_post": confirmed_post,
                     "notes": notes,
                     "attachment_url": url,
                     "mail_proof_url": url,
-                    "status": "Submitted",
-                    "submitted_at": datetime.now().isoformat()
+                    "status": "Submitted"
                 }
                 
                 try:
