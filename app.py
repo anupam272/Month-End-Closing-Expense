@@ -16,7 +16,7 @@ except Exception:
     st.error("Supabase Connection Error! Please verify credentials in secrets.")
     st.stop()
 
-st.set_page_config(page_title="PRISM - Month-End POS Terminal", page_icon="💳", layout="wide")
+st.set_page_config(page_title="SAP NetWeaver - Month-End POS Terminal", page_icon="💼", layout="wide")
 
 # Persistent Session via Query Params / Session State Sync
 query_params = st.query_params
@@ -32,14 +32,14 @@ if "user_role" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state.username = None
 
-# POS Terminal Custom Styling & Focus Glow
+# SAP NetWeaver Enterprise Classic Theme Styling
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap');
 
     .stApp { 
-        background-color: #0f172a; 
-        font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; 
+        background-color: #dbe4f0; 
+        font-family: 'Segoe UI', -apple-system, sans-serif; 
     }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden !important;}
@@ -50,131 +50,121 @@ st.markdown("""
         padding-bottom: 2rem !important;
     }
 
-    /* POS Header styling */
+    /* SAP Header styling */
     .pos-header-container {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: #1e293b;
-        padding: 12px 24px;
-        border-radius: 12px;
-        border: 1px solid #334155;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+        padding: 10px 20px;
+        border-radius: 4px;
+        border: 1px solid #94a3b8;
+        margin-bottom: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     .prism-pos-badge {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 22px;
-        font-weight: 800;
-        letter-spacing: 2px;
-        color: #38bdf8;
-        background: #0f172a;
-        border: 2px solid #38bdf8;
-        border-radius: 8px;
-        padding: 4px 16px;
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: #d97706; /* SAP Orange accent */
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 3px;
+        padding: 4px 10px;
         display: inline-block;
-        box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
     }
 
     .pos-status-online {
-        font-family: 'JetBrains Mono', monospace;
-        color: #10b981;
-        font-size: 13px;
+        font-family: 'Segoe UI', sans-serif;
+        color: #15803d;
+        font-size: 12px;
         font-weight: 600;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
     }
     .pos-status-online::before {
         content: '';
-        width: 10px;
-        height: 10px;
-        background-color: #10b981;
+        width: 8px;
+        height: 8px;
+        background-color: #16a34a;
         border-radius: 50%;
-        box-shadow: 0 0 8px #10b981;
     }
 
     /* Sidebar Customization */
     section[data-testid="stSidebar"] { 
-        background-color: #0b1120; 
-        border-right: 1px solid #1e293b;
+        background-color: #e2e8f0; 
+        border-right: 1px solid #cbd5e1;
     }
     section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] label { 
-        color: #94a3b8 !important; 
+        color: #1e293b !important; 
     }
 
     /* Main Form & Container Box */
     div[data-testid="stForm"] {
-        background: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 16px;
-        padding: 30px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
 
     /* Input Field Labels */
     .stTextInput > label, .stSelectbox > label, .stNumberInput > label, .stDateInput > label, .stTextArea > label, .stFileUploader > label {
         font-weight: 600 !important;
-        color: #cbd5e1 !important;
-        font-size: 13px !important;
-        letter-spacing: 0.3px;
+        color: #334155 !important;
+        font-size: 12px !important;
     }
     
-    /* Input Elements Default POS Style */
+    /* Input Elements Classic SAP Style */
     .stTextInput input, .stSelectbox div[data-baseweb="select"], .stNumberInput input, .stDateInput input, .stTextArea textarea {
-        border-radius: 10px !important;
-        border: 1.5px solid #334155 !important;
-        background-color: #0f172a !important;
-        color: #f8fafc !important;
-        font-family: 'JetBrains Mono', monospace !important;
-        transition: all 0.25s ease-in-out !important;
+        border-radius: 3px !important;
+        border: 1px solid #94a3b8 !important;
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        font-family: 'Segoe UI', sans-serif !important;
     }
 
-    /* Active Input Box POS Neon Highlight */
+    /* Active Input Focus */
     .stTextInput input:focus, 
     .stSelectbox div[data-baseweb="select"]:focus-within, 
     .stNumberInput input:focus, 
     .stTextArea textarea:focus {
-        border-color: #38bdf8 !important;
-        background-color: #0b1329 !important;
-        box-shadow: 0 0 15px rgba(56, 189, 248, 0.4), inset 0 0 5px rgba(56, 189, 248, 0.2) !important;
-        transform: translateY(-1px);
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
     }
 
-    /* POS Button Action Key */
+    /* Action Button */
     .stButton>button {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
         color: #ffffff;
-        border: 1px solid #10b981;
-        border-radius: 10px;
-        font-weight: 700;
-        font-size: 15px;
-        letter-spacing: 1px;
-        padding: 12px 24px;
+        border: 1px solid #1e40af;
+        border-radius: 3px;
+        font-weight: 600;
+        font-size: 13px;
+        padding: 6px 14px;
         width: 100%;
-        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
-        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
     .stButton>button:hover {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
-        transform: translateY(-2px);
+        background: linear-gradient(to bottom, #2563eb, #1e40af);
     }
 
     .pos-section-title {
-        color: #38bdf8;
-        font-family: 'JetBrains Mono', monospace;
+        color: #1e3a8a;
+        font-family: 'Segoe UI', sans-serif;
         font-weight: 700;
-        font-size: 14px;
-        letter-spacing: 1px;
+        font-size: 13px;
+        letter-spacing: 0.5px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         margin-top: 15px;
-        margin-bottom: 15px;
-        border-bottom: 1px dashed #334155;
-        padding-bottom: 8px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #cbd5e1;
+        padding-bottom: 6px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -195,16 +185,16 @@ def fetch_all_properties():
         pass
     return pd.DataFrame()
 
-# POS Live Clock Bar
+# Live Clock Bar
 live_clock_html = """
 <div class="pos-header-container">
-    <div style="display: flex; align-items: center; gap: 14px;">
-        <div class="prism-pos-badge">PRISM POS</div>
-        <div style="color: #94a3b8; font-size: 14px; font-weight: 500;">UK & Europe Month-End Cash Terminal</div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="prism-pos-badge">SAP NetWeaver</div>
+        <div style="color: #475569; font-size: 13px; font-weight: 600;">PRISM UK & Europe Month-End Cash Terminal</div>
     </div>
-    <div style="display: flex; align-items: center; gap: 20px;">
-        <div class="pos-status-online">SECURE SESSION</div>
-        <div id="live-clock" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: #38bdf8;">Loading...</div>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <div class="pos-status-online">PORTAL ACTIVE</div>
+        <div id="live-clock" style="font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 600; color: #1e293b;">Loading...</div>
     </div>
 </div>
 
@@ -231,14 +221,14 @@ updateClock();
 
 # Sidebar Authentication & Navigation
 with st.sidebar:
-    st.markdown("<div style='font-family: monospace; font-size: 20px; font-weight: 800; color: #38bdf8; margin-bottom: 10px;'>PRISM TERMINAL</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-family: Segoe UI, sans-serif; font-size: 15px; font-weight: 700; color: #1e3a8a; margin-bottom: 10px;'>SAP PORTAL NAVIGATOR</div>", unsafe_allow_html=True)
     if not st.session_state.authenticated:
-        st.markdown("<div style='color: #64748b; font-size: 12px;'>Please authenticate to access cash closing modules.</div>", unsafe_allow_html=True)
+        st.markdown("<div style='color: #475569; font-size: 12px;'>Please authenticate to access enterprise modules.</div>", unsafe_allow_html=True)
     else:
-        st.markdown(f"👤 **Manager:** {st.session_state.username}")
-        st.markdown(f"🔑 **Access Level:** {st.session_state.user_role}")
+        st.markdown(f"👤 **User:** {st.session_state.username}")
+        st.markdown(f"🔑 **Role:** {st.session_state.user_role}")
         st.markdown("---")
-        page = st.sidebar.radio("Terminal Menu", [
+        page = st.sidebar.radio("Navigation Menu", [
             "Submit Month-End Closing", 
             "Closing Overview & Ledger", 
             "Audit & Status Management", 
@@ -259,21 +249,21 @@ if not st.session_state.authenticated:
     with col2:
         with st.form("pos_login_form"):
             st.markdown("""
-                <div style='text-align: center; margin-bottom: 20px;'>
-                    <h2 style='color:#38bdf8; font-family: monospace; margin-bottom: 5px;'>🔐 TERMINAL LOGIN</h2>
-                    <p style='color:#94a3b8; font-size: 13px;'>Enter manager credentials to access cash closing system</p>
+                <div style='text-align: center; margin-bottom: 15px;'>
+                    <h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif; margin-bottom: 5px;'>🔐 SAP NETWEAVER LOGIN</h3>
+                    <p style='color:#475569; font-size: 12px;'>Enter enterprise credentials to access portal</p>
                 </div>
             """, unsafe_allow_html=True)
             
-            user_input = st.text_input("MANAGER USERNAME", placeholder="e.g. admin or finance_uk")
-            pass_input = st.text_input("SECURE PASSWORD", type="password", placeholder="••••••••")
+            user_input = st.text_input("USER *", placeholder="e.g. admin or finance_uk")
+            pass_input = st.text_input("PASSWORD *", type="password", placeholder="••••••••")
             
             st.markdown("<br>", unsafe_allow_html=True)
-            login_submit = st.form_submit_button("🚀 AUTHORIZE & OPEN TERMINAL")
+            login_submit = st.form_submit_button("Log On")
             
             if login_submit:
                 if not user_input.strip() or not pass_input.strip():
-                    st.error("⚠️ Please enter both username and password.")
+                    st.error("⚠️ Please enter both user and password.")
                 else:
                     try:
                         res = supabase.table("userstb").select("*").eq("username", user_input.strip()).execute()
@@ -282,7 +272,6 @@ if not st.session_state.authenticated:
                             st.session_state.username = res.data[0]["username"]
                             st.session_state.user_role = res.data[0].get("role", "Manager")
                             
-                            # Set persistent query parameters so refresh (F5/Ctrl+R) keeps the user logged in
                             st.query_params["auth_user"] = st.session_state.username
                             st.query_params["auth_role"] = st.session_state.user_role
                             st.rerun()
@@ -300,8 +289,8 @@ MONTH_OPTIONS = ["Jan'26", "Feb'26", "Mar'26", "Apr'26", "May'26", "Jun'26", "Ju
 if page == "Submit Month-End Closing":
     components.html(live_clock_html, height=75)
     
-    st.markdown("<h4 style='color: #38bdf8; font-family: monospace;'>⚡ MONTH-END CASH CLOSING WIZARD</h4>", unsafe_allow_html=True)
-    st.markdown("<div style='color: #94a3b8; font-size: 13px; margin-bottom: 15px;'>Enter PRISM Property ID, Hotel Name, and Region manually below.</div>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color: #1e3a8a; font-family: Segoe UI, sans-serif;'>⚡ MONTH-END CASH CLOSING WIZARD</h4>", unsafe_allow_html=True)
+    st.markdown("<div style='color: #475569; font-size: 12px; margin-bottom: 12px;'>Enter PRISM Property ID, Hotel Name, and Region manually below.</div>", unsafe_allow_html=True)
 
     with st.form("cash_closing_form", clear_on_submit=False):
         st.markdown("<div class='pos-section-title'>🏢 PROPERTY & PERIOD IDENTIFICATION</div>", unsafe_allow_html=True)
@@ -314,7 +303,6 @@ if page == "Submit Month-End Closing":
             
         with col2:
             month_year = st.selectbox("CLOSING MONTH-YEAR", MONTH_OPTIONS, index=8) # Default Sep'26
-            closing_date = st.date_input("REPORTING DATE", date.today())
 
         st.markdown("<div class='pos-section-title'>💰 CASH RECONCILIATION & CLOSING FIGURES</div>", unsafe_allow_html=True)
         col3, col4 = st.columns(2)
@@ -358,7 +346,6 @@ if page == "Submit Month-End Closing":
                     "hotel_name": hotel_name,
                     "region": region,
                     "month_year": month_year,
-                    "closing_date": str(closing_date),
                     "petty_cash_expense": petty_cash_expense,
                     "closing_balance": closing_balance,
                     "confirmed_by": confirmed_by,
@@ -377,7 +364,7 @@ if page == "Submit Month-End Closing":
 # ----------------- 2. CLOSING OVERVIEW & LEDGER -----------------
 elif page == "Closing Overview & Ledger":
     components.html(live_clock_html, height=75)
-    st.markdown("<h3 style='color:#38bdf8; font-family: monospace;'>📊 MONTH-END CASH LEDGER OVERVIEW</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>📊 MONTH-END CASH LEDGER OVERVIEW</h3>", unsafe_allow_html=True)
     df = fetch_closing_records()
     if not df.empty:
         st.dataframe(df, use_container_width=True)
@@ -387,7 +374,7 @@ elif page == "Closing Overview & Ledger":
 # ----------------- 3. AUDIT & STATUS MANAGEMENT -----------------
 elif page == "Audit & Status Management":
     components.html(live_clock_html, height=75)
-    st.markdown("<h3 style='color:#38bdf8; font-family: monospace;'>⚙️ CLOSING AUDIT & STATUS PANEL</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>⚙️ CLOSING AUDIT & STATUS PANEL</h3>", unsafe_allow_html=True)
     df = fetch_closing_records()
     if not df.empty:
         st.dataframe(df, use_container_width=True)
@@ -397,7 +384,7 @@ elif page == "Audit & Status Management":
 # ----------------- 4. MASTER REPORTS & PENDING TRACKER -----------------
 elif page == "Master Reports & Pending":
     components.html(live_clock_html, height=75)
-    st.markdown("<h3 style='color:#38bdf8; font-family: monospace;'>📥 MASTER HOTEL REPORT & MISSING DATA TRACKER</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>📥 MASTER HOTEL REPORT & MISSING DATA TRACKER</h3>", unsafe_allow_html=True)
     
     selected_month = st.selectbox("SELECT MONTH-YEAR FOR STATUS AUDIT", MONTH_OPTIONS, index=8) # Default Sep'26
     
