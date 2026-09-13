@@ -321,7 +321,7 @@ if page == "Submit Month-End Closing":
                     except Exception as upload_err:
                         st.warning(f"Storage Notice: {str(upload_err)}")
                 
-                # Payload perfectly matched with your Supabase column schema
+                # Clean payload matched with your table schema
                 payload = {
                     "submitted_by": st.session_state.username,
                     "prism_id": prism_id_input.strip().upper(),
@@ -330,8 +330,8 @@ if page == "Submit Month-End Closing":
                     "month_year": month_year,
                     "petty_cash_expense": petty_cash_expense,
                     "total_monthly_expense": petty_cash_expense,
-                    "closing_balance": closing_balance,
                     "closing_cash_balance": closing_balance,
+                    "closing_balance": closing_balance,
                     "fine_amount": 0.0,
                     "confirmed_by": confirmed_by,
                     "confirmed_post": confirmed_post,
@@ -354,7 +354,14 @@ elif page == "Closing Overview & Ledger":
     st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>📊 MONTH-END CASH & EXPENSE LEDGER OVERVIEW</h3>", unsafe_allow_html=True)
     df = fetch_closing_records()
     if not df.empty:
-        st.dataframe(df, use_container_width=True)
+        # Clean & orderly column selection to prevent clutter
+        desired_cols = [
+            "id", "prism_id", "hotel_name", "region", "month_year", 
+            "closing_cash_balance", "petty_cash_expense", "fine_amount", 
+            "confirmed_by", "confirmed_post", "status", "submitted_by", "notes"
+        ]
+        existing_cols = [col for col in desired_cols if col in df.columns]
+        st.dataframe(df[existing_cols], use_container_width=True)
     else:
         st.info("No closing records found in ledger.")
 
@@ -364,7 +371,13 @@ elif page == "Audit & Status Management":
     st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>⚙️ CLOSING AUDIT & STATUS PANEL</h3>", unsafe_allow_html=True)
     df = fetch_closing_records()
     if not df.empty:
-        st.dataframe(df, use_container_width=True)
+        desired_cols = [
+            "id", "prism_id", "hotel_name", "region", "month_year", 
+            "closing_cash_balance", "petty_cash_expense", "confirmed_by", 
+            "confirmed_post", "status", "submitted_by", "notes"
+        ]
+        existing_cols = [col for col in desired_cols if col in df.columns]
+        st.dataframe(df[existing_cols], use_container_width=True)
     else:
         st.info("No closing records available for audit.")
 
@@ -400,7 +413,7 @@ elif page == "Master Reports & Pending":
                 matched_row = month_entries[month_entries["prism_id"].astype(str).str.strip().str.upper() == p_id]
                 if not matched_row.empty:
                     submitted_by = matched_row.iloc[0].get("submitted_by", "")
-                    closing_balance = matched_row.iloc[0].get("closing_balance", 0.0)
+                    closing_balance = matched_row.iloc[0].get("closing_cash_balance", 0.0)
 
             report_rows.append({
                 "PRISM ID": p_id,
