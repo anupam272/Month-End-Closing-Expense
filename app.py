@@ -241,7 +241,7 @@ with st.sidebar:
             st.session_state.authenticated = False
             st.rerun()
 
-# ----------------- UPGRADED MANAGER LOGIN SCREEN -----------------
+# ----------------- MANAGER LOGIN SCREEN -----------------
 if not st.session_state.authenticated:
     components.html(live_clock_html, height=75)
     st.markdown("<br>", unsafe_allow_html=True)
@@ -347,7 +347,6 @@ if page == "Submit Month-End Closing":
                     "closing_date": str(closing_date),
                     "petty_cash_expense": petty_cash_expense,
                     "closing_balance": closing_balance,
-                    "amount": closing_balance,
                     "confirmed_by": confirmed_by,
                     "confirmed_post": confirmed_post,
                     "notes": notes,
