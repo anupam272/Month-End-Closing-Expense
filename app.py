@@ -11,32 +11,97 @@ def init_supabase() -> Client:
 
 try:
     supabase = init_supabase()
-except Exception as e:
+except Exception:
     st.error("Supabase Connection Error! Secrets verify karein.")
     st.stop()
 
-st.set_page_config(page_title="PRISM Month-End Cash Tracker", page_icon="📈", layout="wide")
+st.set_page_config(page_title="Petty Cash Management Portal", page_icon="📈", layout="wide")
 
-# Styling & Custom CSS
+# Custom CSS matching exact screenshot UI
 st.markdown("""
     <style>
-    .stApp { background-color: #f5f6f7; font-family: "72", Arial, sans-serif; }
+    .stApp { background-color: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden !important;}
     header {visibility: hidden;}
-    .main-header {
-        font-size: 20px; font-weight: 600; color: #1d2d3e; margin-bottom: 20px; 
-        border-bottom: 2px solid #0070f2; padding: 12px 16px; background-color: #ffffff;
-        border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        display: flex; justify-content: space-between; align-items: center;
+    
+    /* Top Time Badge Styling */
+    .time-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #3b82f6;
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+    
+    /* Portal Title Header Header */
+    .portal-header-container {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 25px;
+    }
+    .prism-title-logo {
+        font-family: 'Arial Black', sans-serif;
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: -1px;
+        color: #1e293b;
+        border: 2px solid #1e293b;
+        padding: 0px 8px;
+        border-radius: 6px;
+        line-height: 1.1;
+    }
+    .portal-title-text {
+        font-size: 26px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+    }
+
+    /* Sidebar Styling */
+    section[data-testid="stSidebar"] { background-color: #1c2b36; color: #ffffff; }
+    section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] label { color: #94a3b8 !important; }
+    
+    .sidebar-logo {
+        font-family: 'Arial Black', sans-serif;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: -1px;
+        color: #ffffff;
+        border: 2px solid #ffffff;
+        padding: 2px 10px;
+        border-radius: 6px;
+        display: inline-block;
+        margin-bottom: 8px;
+    }
+    .sidebar-subtitle {
+        color: #94a3b8 !important;
+        font-size: 12px;
+        margin-bottom: 20px;
+    }
+
+    /* Form Card Styling */
+    div[data-testid="stForm"] {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
     .stButton>button {
-        width: 100%; border-radius: 4px; font-weight: 600; background-color: #0070f2; 
-        color: white; border: 1px solid #0070f2; padding: 6px 16px;
+        background-color: #ffffff;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-weight: 500;
     }
-    section[data-testid="stSidebar"] { background-color: #1d2d3e; color: #ffffff; }
-    section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] label { color: #ffffff !important; }
-    .brand-logo { font-size: 24px; font-weight: bold; color: #0070f2; letter-spacing: 1px; margin-bottom: 10px; }
+    .stButton>button:hover {
+        border-color: #3b82f6;
+        color: #3b82f6;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -51,206 +116,118 @@ def fetch_closing_records():
     try:
         res = supabase.table("month_end_cash_tracker").select("*").order("id", desc=True).execute()
         return pd.DataFrame(res.data) if res.data else pd.DataFrame()
-    except Exception as e:
-        st.error(f"Data Fetch Error: {str(e)}")
+    except Exception:
         return pd.DataFrame()
 
-# Dynamic Time Header
-current_time_str = datetime.now().strftime("%d %b %Y | %I:%M %p IST")
+# Current Time Stamp
+current_time_str = datetime.now().strftime("%d %b %Y, %I:%M:%S %p").lower()
 
-# Sidebar Branding & Navigation
+# Sidebar Rendering
 with st.sidebar:
-    st.markdown("<div class='brand-logo'>🏢 PRISM ENTERPRISE</div>", unsafe_allow_html=True)
-    st.markdown("<h4 style='color:white; margin-top:-10px;'>Month-End Cash Portal</h4>", unsafe_allow_html=True)
-    st.markdown("---")
+    st.markdown("<div class='sidebar-logo'>PRISM</div>", unsafe_allow_html=True)
+    if not st.session_state.authenticated:
+        st.markdown("<div class='sidebar-subtitle'>Please log in to access system modules.</div>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"👤 **Logged User:** {st.session_state.username}", unsafe_allow_html=True)
+        st.markdown(f"🔑 **Role:** {st.session_state.user_role}", unsafe_allow_html=True)
+        st.markdown("---")
+        page = st.sidebar.radio("Navigation Menu", [
+            "Closing Overview & Ledger", 
+            "Submit Month-End Entry", 
+            "Audit & Status Update", 
+            "Month-End Reports"
+        ])
+        if st.sidebar.button("Logout"):
+            st.session_state.authenticated = False
+            st.rerun()
 
-if st.session_state.authenticated:
-    st.sidebar.markdown(f"👤 **Logged User:** {st.session_state.username}<br>🔑 **Role:** {st.session_state.user_role}", unsafe_allow_html=True)
-    st.sidebar.markdown(f"⏰ **Current Time:**<br>`{current_time_str}`", unsafe_allow_html=True)
-    st.sidebar.markdown("---")
-    page = st.sidebar.radio("Navigation Menu", [
-        "Closing Overview & Ledger", 
-        "Submit Month-End Entry", 
-        "Audit & Status Update", 
-        "Month-End Reports"
-    ])
-    if st.sidebar.button("Logout"):
-        st.session_state.authenticated = False
-        st.rerun()
-else:
-    page = "Login"
-
-# Authentication Page
+# Authentication Page UI
 if not st.session_state.authenticated:
+    # Blue Dynamic Time Pill
     st.markdown(f"""
-        <div class='main-header'>
-            <span>📈 PRISM Month-End Cash Tracker Portal</span>
-            <span style='font-size: 14px; font-weight: normal; color: #555;'>🕒 {current_time_str}</span>
+        <div class="time-badge">
+            🗓️ {current_time_str}
         </div>
+        <div class="portal-header-container">
+            <div class="prism-title-logo">PRISM</div>
+            <div class="portal-title-text">Petty Cash Management Portal</div>
+        </div>
+        <hr style="margin-top: 0; margin-bottom: 40px; border-color: #e2e8f0;">
     """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    col1, col2, col3 = st.columns([1, 2, 1])
+
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         with st.form("login_form"):
-            st.markdown("### 🔐 User Sign-In")
-            user_input = st.text_input("Username (e.g. admin)")
+            st.markdown("<h3 style='margin-bottom:20px;'>🔒 Secure Sign In</h3>", unsafe_allow_html=True)
+            user_input = st.text_input("Username")
             pass_input = st.text_input("Password", type="password")
-            submit = st.form_submit_button("Sign In")
+            submit = st.form_submit_button("Login")
+            
             if submit:
                 try:
-                    res = supabase.table("users").select("*").eq("username", user_input.strip()).execute()
-                    if res.data and res.data[0]["password"] == pass_input.strip():
+                    res = supabase.table("userstb").select("*").eq("username", user_input.strip()).execute()
+                    if res.data and str(res.data[0].get("password", "")).strip() == pass_input.strip():
                         st.session_state.authenticated = True
                         st.session_state.username = res.data[0]["username"]
                         st.session_state.user_role = res.data[0].get("role", "User")
-                        st.success("Login Successful!")
                         st.rerun()
                     else:
-                        st.error("Invalid Credentials! Check username and password in Supabase users table.")
+                        st.error("Invalid Credentials!")
                 except Exception as err:
-                    st.error(f"Login Table Error: {str(err)}. Run SQL query to set up default users table.")
+                    st.error(f"Error: {str(err)}")
     st.stop()
 
+# Post-Login Pages
 REGION_OPTIONS = ["UK", "Europe"]
 CATEGORY_OPTIONS = ["Petty Cash Closing Balance", "Cash at Hotel", "Vendor Cash Settlement", "Bank & Card Adjustments", "Operational Expenses"]
 STATUS_OPTIONS = ["Submitted", "Under Review", "Approved", "Rejected"]
 
-# 1. Ledger Overview Page
 if page == "Closing Overview & Ledger":
-    st.markdown(f"""
-        <div class='main-header'>
-            <span>📊 Month-End Cash Tracker Ledger</span>
-            <span style='font-size: 14px; color: #555;'>🕒 System Time: {current_time_str}</span>
-        </div>
-    """, unsafe_allow_html=True)
-    
+    st.markdown(f"### 📊 Petty Cash Ledger ({current_time_str})")
     df = fetch_closing_records()
-    
     if not df.empty:
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Total Records", len(df))
-        col2.metric("Total Closing Cash", f"€/£ {df['amount'].sum():,.2f}" if 'amount' in df.columns else "0.00")
-        col3.metric("Approved Entries", len(df[df['status'] == 'Approved']) if 'status' in df.columns else 0)
-        col4.metric("Pending Audits", len(df[df['status'].isin(['Submitted', 'Under Review'])]) if 'status' in df.columns else 0)
-        
-        st.markdown("### 📋 Submissions Ledger")
-        st.dataframe(
-            df, 
-            column_config={
-                "attachment_url": st.column_config.LinkColumn("Attachment Receipt")
-            },
-            use_container_width=True
-        )
+        st.dataframe(df, use_container_width=True)
     else:
-        st.info("No records found in month_end_cash_tracker.")
+        st.info("No records found.")
 
-# 2. Entry Submission Form
 elif page == "Submit Month-End Entry":
-    st.markdown(f"""
-        <div class='main-header'>
-            <span>📝 Submit Entry with Clock Logs & Attachments</span>
-            <span style='font-size: 14px; color: #555;'>🕒 {current_time_str}</span>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    with st.form("cash_tracker_form", clear_on_submit=False):
+    st.markdown("### 📝 Submit Cash Entry")
+    with st.form("cash_form"):
         col1, col2 = st.columns(2)
-        
         with col1:
-            prism_id = st.text_input("Property / PRISM ID (e.g. UK_LON_01)")
+            prism_id = st.text_input("PRISM Property ID")
             month_year = st.selectbox("Month-Year", ["Jan-2026", "Feb-2026", "Mar-2026", "Apr-2026", "May-2026", "Jun-2026", "Jul-2026", "Aug-2026", "Sep-2026", "Oct-2026", "Nov-2026", "Dec-2026"])
-            clock_in = st.time_input("Clock In Time / Login Time", time(9, 0))
-            clock_out = st.time_input("Clock Out Time / Logout Time", time(18, 0))
-            region = st.selectbox("Region", REGION_OPTIONS)
-            
+            amount = st.number_input("Amount", min_value=0.0)
         with col2:
-            category = st.selectbox("Expense Category", CATEGORY_OPTIONS)
-            amount = st.number_input("Closing Cash Amount (£/€)", min_value=0.0, format="%.2f")
-            ref_number = st.text_input("Voucher / Ref Number")
-            closing_date = st.date_input("Closing Date", date.today())
-
-        st.markdown("---")
-        uploaded_file = st.file_uploader("📎 Upload Attachment (PDF, Email Print, Invoice JPG/PNG)", type=["pdf", "png", "jpg", "jpeg", "msg", "eml"])
-        notes = st.text_area("Audit / Reconciliation Notes")
+            region = st.selectbox("Region", REGION_OPTIONS)
+            category = st.selectbox("Category", CATEGORY_OPTIONS)
+            closing_date = st.date_input("Date", date.today())
         
-        submitted = st.form_submit_button("Submit Record")
+        uploaded_file = st.file_uploader("Upload Attachment (PDF/Mail)", type=["pdf", "png", "jpg", "eml"])
+        submit_btn = st.form_submit_button("Submit Entry")
         
-        if submitted:
-            if not prism_id or amount <= 0:
-                st.error("❌ PRISM ID aur Amount add karna zaroori hai.")
-            else:
-                attachment_url = ""
-                if uploaded_file is not None:
-                    try:
-                        file_bytes = uploaded_file.read()
-                        file_path = f"{prism_id}/{month_year}_{uploaded_file.name}"
-                        supabase.storage.from_("month_end_attachments").upload(
-                            path=file_path, 
-                            file=file_bytes, 
-                            file_options={"content-type": uploaded_file.type}
-                        )
-                        attachment_url = supabase.storage.from_("month_end_attachments").get_public_url(file_path)
-                    except Exception as upload_err:
-                        st.warning(f"⚠️ Attachment Upload Notice: {str(upload_err)}")
-
+        if submit_btn:
+            url = ""
+            if uploaded_file:
                 try:
-                    payload = {
-                        "created_at": datetime.now().isoformat(),
-                        "submitted_by": st.session_state.username,
-                        "prism_id": prism_id,
-                        "month_year": month_year,
-                        "clock_in": str(clock_in),
-                        "clock_out": str(clock_out),
-                        "region": region,
-                        "category": category,
-                        "amount": amount,
-                        "ref_number": ref_number,
-                        "closing_date": str(closing_date),
-                        "notes": notes,
-                        "attachment_url": attachment_url,
-                        "status": "Submitted"
-                    }
-                    supabase.table("month_end_cash_tracker").insert(payload).execute()
-                    st.success("✅ Entry aur Attachment save ho gaye!")
-                except Exception as err:
-                    st.error(f"❌ Database error: {str(err)}")
-
-# 3. Status Change Management
-elif page == "Audit & Status Update":
-    st.markdown("<div class='main-header'>⚙️ Audit Entry & View Attachment</div>", unsafe_allow_html=True)
-    df = fetch_closing_records()
-    
-    if not df.empty:
-        selected_id = st.selectbox("Select Record ID to Update", df["id"].tolist())
-        record = df[df["id"] == selected_id].iloc[0]
-        
-        st.write(f"**PRISM ID:** {record.get('prism_id', 'N/A')} | **Month:** {record.get('month_year', 'N/A')} | **Amount:** {record.get('amount', 0.0)}")
-        
-        url = record.get("attachment_url", "")
-        if url:
-            st.markdown(f"📎 **Attached File:** [View / Download PDF/Mail Receipt]({url})")
-        else:
-            st.write("📎 **Attached File:** No attachment uploaded.")
+                    file_bytes = uploaded_file.read()
+                    file_path = f"{prism_id}/{month_year}_{uploaded_file.name}"
+                    supabase.storage.from_("month_end_attachments").upload(file_path, file_bytes)
+                    url = supabase.storage.from_("month_end_attachments").get_public_url(file_path)
+                except Exception as upload_err:
+                    st.warning(f"Attachment alert: {str(upload_err)}")
             
-        current_status = record.get("status", "Submitted")
-        new_status = st.selectbox("Status Dropdown", STATUS_OPTIONS, index=STATUS_OPTIONS.index(current_status) if current_status in STATUS_OPTIONS else 0)
-        remarks = st.text_input("Manager Notes", value=str(record.get("notes", "")))
-        
-        if st.button("Update Status"):
-            supabase.table("month_end_cash_tracker").update({"status": new_status, "notes": remarks}).eq("id", selected_id).execute()
-            st.success(f"✅ Record #{selected_id} Status update ho gaya!")
-            st.rerun()
-    else:
-        st.info("No records available.")
-
-# 4. Reports Export Page
-elif page == "Month-End Reports":
-    st.markdown("<div class='main-header'>📥 Export Cash Tracker Reports</div>", unsafe_allow_html=True)
-    df = fetch_closing_records()
-    
-    if not df.empty:
-        csv_data = df.to_csv(index=False).encode('utf-8')
-        st.download_button("📄 Export CSV Report", csv_data, f"Month_End_Cash_Tracker_{date.today()}.csv", "text/csv")
-    else:
-        st.info("No data to export.")
+            payload = {
+                "created_at": datetime.now().isoformat(),
+                "submitted_by": st.session_state.username,
+                "prism_id": prism_id,
+                "month_year": month_year,
+                "region": region,
+                "category": category,
+                "amount": amount,
+                "closing_date": str(closing_date),
+                "attachment_url": url,
+                "status": "Submitted"
+            }
+            supabase.table("month_end_cash_tracker").insert(payload).execute()
+            st.success("Record successfully saved!")
