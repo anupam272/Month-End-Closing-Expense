@@ -31,7 +31,7 @@ if "user_role" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state.username = None
 
-# Custom Corporate Finance Theme Styling with prismlife.com Logo Style
+# Custom Corporate Finance Theme Styling
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700;800&display=swap');
@@ -54,29 +54,13 @@ st.markdown("""
         align-items: center !important;
         justify-content: space-between !important;
         background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
-        padding: 12px 20px;
+        padding: 10px 20px;
         border-radius: 4px;
         border: 1px solid #94a3b8;
         margin-bottom: 15px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         width: 100%;
         box-sizing: border-box;
-    }
-
-    /* Exact prismlife.com stylized outline logo match */
-    .prism-life-logo {
-        font-family: 'Segoe UI', sans-serif;
-        font-size: 20px;
-        font-weight: 800;
-        letter-spacing: 4px;
-        color: #1e3a8a;
-        background: transparent;
-        border: 2.5px solid #1e3a8a;
-        border-radius: 4px;
-        padding: 2px 10px;
-        display: inline-block;
-        box-shadow: inset 0 0 0 1px #1e3a8a;
-        text-transform: uppercase;
     }
 
     section[data-testid="stSidebar"] { 
@@ -157,23 +141,18 @@ def fetch_hotel_master():
         pass
     return pd.DataFrame()
 
-# Header with centered combined text: Month-End Cash & Expense Portal (UK & Europe Operations)
 def render_header():
     now_str = datetime.now().strftime("%d %b %Y | %I:%M:%S %p")
-    header_html = f"""
-    <div class="pos-header-container">
-        <div style="display: flex; align-items: center;">
-            <span class="prism-life-logo">PRISM</span>
-        </div>
-        <div style="text-align: center;">
-            <span style="color: #1e3a8a; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">Month-End Cash & Expense Portal (UK & Europe Operations)</span>
-        </div>
-        <div style="text-align: right;">
-            <span style="font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 600; color: #1e293b;">{now_str}</span>
-        </div>
-    </div>
-    """
-    st.markdown(header_html, unsafe_allow_html=True)
+    
+    col_logo, col_title, col_time = st.columns([1.2, 3, 1.5])
+    with col_logo:
+        # Direct render of your provided PRISM logo image
+        st.image("https://i.imgur.com/8QG3YyL.png", width=140)
+    with col_title:
+        st.markdown("<div style='text-align: center;'><span style='color: #1e3a8a; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;'>Month-End Cash & Expense Portal (UK & Europe Operations)</span></div>", unsafe_allow_html=True)
+    with col_time:
+        st.markdown(f"<div style='text-align: right;'><span style='font-family: Segoe UI, sans-serif; font-size: 12px; font-weight: 600; color: #1e293b;'>{now_str}</span></div>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin: 5px 0px 15px 0px; border: none; border-top: 1px solid #cbd5e1;'>", unsafe_allow_html=True)
 
 # Sidebar Authentication & Navigation
 with st.sidebar:
@@ -246,7 +225,7 @@ if page == "Submit Month-End Closing":
     render_header()
     
     st.markdown("<h4 style='color: #1e3a8a; font-family: Segoe UI, sans-serif;'>⚡ MONTH-END CASH & EXPENSE CLOSING WIZARD</h4>", unsafe_allow_html=True)
-    st.markdown("<div style='color: #475569; font-size: 12px; margin-bottom: 12px;'>Enter PRISM Property ID to auto-fetch Hotel Name and Region from Hotel Master.</div>", unsafe_allow_html=True)
+    st.markdown("<div style='color: #475569; font-size: 12px; margin-bottom: 12px;'>Enter PRISM Property ID below to auto-fetch Hotel Name and Region from Hotel Master.</div>", unsafe_allow_html=True)
 
     if "auto_hotel_name" not in st.session_state:
         st.session_state.auto_hotel_name = ""
@@ -266,6 +245,7 @@ if page == "Submit Month-End Closing":
                         st.session_state.auto_region = reg
                 else:
                     st.session_state.auto_hotel_name = "Not Found in Hotel Master"
+            st.rerun()
 
     with st.container():
         st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
