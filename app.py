@@ -157,18 +157,18 @@ def fetch_hotel_master():
         pass
     return pd.DataFrame()
 
-# Live Clock Bar with Official prismlife.com Outline Logo Style (Rendered directly via st.markdown)
+# Header with centered combined text: Month-End Cash & Expense Portal (UK & Europe Operations)
 def render_header():
     now_str = datetime.now().strftime("%d %b %Y | %I:%M:%S %p")
     header_html = f"""
     <div class="pos-header-container">
-        <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="display: flex; align-items: center;">
             <span class="prism-life-logo">PRISM</span>
-            <span style="color: #334155; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">UK & EUROPE PORTAL ACTIVE</span>
         </div>
-        <div style="display: flex; align-items: center; gap: 15px; text-align: right;">
-            <span style="color: #475569; font-size: 12px; font-weight: 600;">Month-End Cash & Expense Portal</span>
-            <span style="color: #94a3b8; font-size: 12px; font-weight: 600;">|</span>
+        <div style="text-align: center;">
+            <span style="color: #1e3a8a; font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">Month-End Cash & Expense Portal (UK & Europe Operations)</span>
+        </div>
+        <div style="text-align: right;">
             <span style="font-family: 'Segoe UI', sans-serif; font-size: 12px; font-weight: 600; color: #1e293b;">{now_str}</span>
         </div>
     </div>
@@ -248,7 +248,6 @@ if page == "Submit Month-End Closing":
     st.markdown("<h4 style='color: #1e3a8a; font-family: Segoe UI, sans-serif;'>⚡ MONTH-END CASH & EXPENSE CLOSING WIZARD</h4>", unsafe_allow_html=True)
     st.markdown("<div style='color: #475569; font-size: 12px; margin-bottom: 12px;'>Enter PRISM Property ID to auto-fetch Hotel Name and Region from Hotel Master.</div>", unsafe_allow_html=True)
 
-    # Initialize session states for auto-fetching
     if "auto_hotel_name" not in st.session_state:
         st.session_state.auto_hotel_name = ""
     if "auto_region" not in st.session_state:
@@ -268,7 +267,6 @@ if page == "Submit Month-End Closing":
                 else:
                     st.session_state.auto_hotel_name = "Not Found in Hotel Master"
 
-    # Use a clean container instead of st.form to enable instant reactive auto-fetching
     with st.container():
         st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
         
