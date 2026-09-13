@@ -1,5 +1,6 @@
 import io
 from datetime import datetime, date
+import os
 import pandas as pd
 import streamlit as st
 from supabase import create_client, Client
@@ -64,6 +65,15 @@ st.markdown("""
         border-radius: 6px;
         padding: 25px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .logo-container {
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        padding: 4px 8px;
+        display: inline-block;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     .stTextInput > label, .stSelectbox > label, .stNumberInput > label, .stDateInput > label, .stTextArea > label, .stFileUploader > label {
@@ -133,11 +143,13 @@ def render_header():
     
     col_logo, col_title, col_time = st.columns([1.2, 3, 1.5])
     with col_logo:
-        try:
-            # Displaying the uploaded PRISM logo image directly
-            st.image("logoprism_2.png", width=140)
-        except Exception:
-            st.markdown("<h2 style='color:#1e3a8a; margin:0;'>PRISM</h2>", unsafe_allow_html=True)
+        logo_filename = "logoprism_2.png"
+        if os.path.exists(logo_filename):
+            st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+            st.image(logo_filename, width=130)
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.error(f"⚠️ Missing: {logo_filename} in root folder!")
             
     with col_title:
         st.markdown("<div style='text-align: center;'><span style='color: #1e3a8a; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;'>Month-End Cash & Expense Portal (UK & Europe Operations)</span></div>", unsafe_allow_html=True)
