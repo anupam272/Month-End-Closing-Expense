@@ -26,27 +26,41 @@ st.markdown("""
     footer {visibility: hidden !important;}
     header {visibility: hidden;}
     
-    /* PRISM Exact Logo Box Styling */
-    .prism-box-logo {
-        display: inline-flex;
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-bottom: 2rem !important;
+    }
+
+    .brand-header-flex {
+        display: flex;
         align-items: center;
-        justify-content: center;
+        gap: 16px;
+        margin-top: 5px;
+        margin-bottom: 15px;
+    }
+
+    .prism-box-logo {
         font-family: 'Arial Black', sans-serif;
         font-size: 26px;
         font-weight: 900;
         letter-spacing: 1px;
         color: #1e293b;
-        border: 2.5px solid #1e293b;
-        border-radius: 8px;
-        padding: 2px 12px;
+        border: 2px solid #1e293b;
+        border-radius: 6px;
+        padding: 4px 14px;
         line-height: 1;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        display: inline-block;
+    }
+
+    .portal-title-text {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
+        line-height: 1.2;
     }
 
     .sidebar-prism-logo {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
         font-family: 'Arial Black', sans-serif;
         font-size: 24px;
         font-weight: 900;
@@ -54,46 +68,41 @@ st.markdown("""
         color: #ffffff;
         border: 2px solid #ffffff;
         border-radius: 6px;
-        padding: 4px 12px;
+        padding: 4px 14px;
         line-height: 1;
+        display: inline-block;
         margin-bottom: 8px;
     }
 
-    /* Portal Title Text */
-    .portal-title-text {
-        font-size: 24px;
-        font-weight: 600;
-        color: #1e293b;
-        margin-left: 15px;
-    }
-
-    /* Sidebar Theme */
     section[data-testid="stSidebar"] { background-color: #1c2b36; color: #ffffff; }
     section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] label { color: #94a3b8 !important; }
+    
     .sidebar-subtitle {
         color: #94a3b8 !important;
         font-size: 13px;
         margin-bottom: 20px;
     }
 
-    /* Form Container */
     div[data-testid="stForm"] {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+        padding: 28px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
     }
+    
     .stButton>button {
-        background-color: #ffffff;
-        color: #334155;
-        border: 1px solid #cbd5e1;
+        background-color: #0070f2;
+        color: #ffffff;
+        border: 1px solid #0070f2;
         border-radius: 6px;
-        font-weight: 500;
+        font-weight: 600;
+        padding: 8px 20px;
+        width: 100%;
     }
     .stButton>button:hover {
-        border-color: #3b82f6;
-        color: #3b82f6;
+        background-color: #005bb5;
+        color: #ffffff;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -112,10 +121,22 @@ def fetch_closing_records():
     except Exception:
         return pd.DataFrame()
 
-# JavaScript Real-Time Live Ticking Clock Component
+# Auto Fetch Property Info Helper
+def get_property_details(prism_id):
+    if not prism_id:
+        return "", "UK"
+    try:
+        res = supabase.table("month_end_cash_tracker").select("hotel_name, region").eq("prism_id", prism_id.strip()).limit(1).execute()
+        if res.data and len(res.data) > 0:
+            return res.data[0].get("hotel_name", ""), res.data[0].get("region", "UK")
+    except Exception:
+        pass
+    return "", "UK"
+
+# Real-time Clock Component
 live_clock_html = """
-<div id="clock-container" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; font-weight: 500; color: #3b82f6; display: flex; align-items: center; gap: 6px;">
-    <span>📅</span> <span id="live-clock">Loading live time...</span>
+<div id="clock-container" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; font-weight: 500; color: #3b82f6; display: flex; align-items: center; gap: 6px; margin-bottom: -5px;">
+    <span>📅</span> <span id="live-clock">Loading time...</span>
 </div>
 
 <script>
@@ -140,7 +161,7 @@ updateClock();
 </script>
 """
 
-# Sidebar Layout
+# Sidebar Section
 with st.sidebar:
     st.markdown("<div class='sidebar-prism-logo'>PRISM</div>", unsafe_allow_html=True)
     if not st.session_state.authenticated:
@@ -159,14 +180,11 @@ with st.sidebar:
             st.session_state.authenticated = False
             st.rerun()
 
-# Login Header Section
+# Login Header & Page UI
 if not st.session_state.authenticated:
-    # Live Clock Execution
-    components.html(live_clock_html, height=30)
-    
-    # Title Header with Logo Box
+    components.html(live_clock_html, height=25)
     st.markdown("""
-        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+        <div class="brand-header-flex">
             <div class="prism-box-logo">PRISM</div>
             <div class="portal-title-text">Petty Cash Management Portal</div>
         </div>
@@ -176,7 +194,7 @@ if not st.session_state.authenticated:
     col1, col2, col3 = st.columns([1, 1.1, 1])
     with col2:
         with st.form("login_form"):
-            st.markdown("<h3 style='margin-bottom:20px; color:#1e293b;'>🔒 Secure Sign In</h3>", unsafe_allow_html=True)
+            st.markdown("<h3 style='margin-bottom:20px; color:#1e293b; font-size:20px;'>🔒 Secure Sign In</h3>", unsafe_allow_html=True)
             user_input = st.text_input("Username")
             pass_input = st.text_input("Password", type="password")
             submit = st.form_submit_button("Login")
@@ -195,13 +213,14 @@ if not st.session_state.authenticated:
                     st.error(f"Error: {str(err)}")
     st.stop()
 
-# Post-Login Dynamic Dashboard Pages
+# Post-Login Dynamic Form Options
 REGION_OPTIONS = ["UK", "Europe"]
-CATEGORY_OPTIONS = ["Petty Cash Closing Balance", "Cash at Hotel", "Vendor Cash Settlement", "Bank & Card Adjustments", "Operational Expenses"]
+POST_OPTIONS = ["GM", "CGM", "Reception", "Host", "Mice", "Accounts", "PPM", "Other"]
+MONTH_OPTIONS = ["Jan-2026", "Feb-2026", "Mar-2026", "Apr-2026", "May-2026", "Jun-2026", "Jul-2026", "Aug-2026", "Sep-2026", "Oct-2026", "Nov-2026", "Dec-2026"]
 STATUS_OPTIONS = ["Submitted", "Under Review", "Approved", "Rejected"]
 
 if page == "Closing Overview & Ledger":
-    components.html(live_clock_html, height=30)
+    components.html(live_clock_html, height=25)
     st.markdown("### 📊 Petty Cash Ledger")
     df = fetch_closing_records()
     if not df.empty:
@@ -210,44 +229,92 @@ if page == "Closing Overview & Ledger":
         st.info("No records found.")
 
 elif page == "Submit Month-End Entry":
-    components.html(live_clock_html, height=30)
+    components.html(live_clock_html, height=25)
     st.markdown("### 📝 Submit Cash Entry")
-    with st.form("cash_form"):
+    
+    # Auto fetch trigger outside form
+    prism_id_input = st.text_input("PRISM Property ID (Type Property ID to auto-fetch details)", key="prism_search")
+    auto_hotel_name, auto_region = get_property_details(prism_id_input)
+
+    with st.form("cash_form", clear_on_submit=False):
         col1, col2 = st.columns(2)
-        with col1:
-            prism_id = st.text_input("PRISM Property ID")
-            month_year = st.selectbox("Month-Year", ["Jan-2026", "Feb-2026", "Mar-2026", "Apr-2026", "May-2026", "Jun-2026", "Jul-2026", "Aug-2026", "Sep-2026", "Oct-2026", "Nov-2026", "Dec-2026"])
-            amount = st.number_input("Amount", min_value=0.0)
-        with col2:
-            region = st.selectbox("Region", REGION_OPTIONS)
-            category = st.selectbox("Category", CATEGORY_OPTIONS)
-            closing_date = st.date_input("Date", date.today())
         
-        uploaded_file = st.file_uploader("Upload Attachment (PDF/Mail)", type=["pdf", "png", "jpg", "eml"])
-        submit_btn = st.form_submit_button("Submit Entry")
+        with col1:
+            hotel_name = st.text_input("Hotel Name", value=auto_hotel_name, help="Enter Hotel Name if not auto-filled")
+            region_idx = REGION_OPTIONS.index(auto_region) if auto_region in REGION_OPTIONS else 0
+            region = st.selectbox("Region", REGION_OPTIONS, index=region_idx)
+            month_year = st.selectbox("Month-Year", MONTH_OPTIONS)
+            closing_date = st.date_input("Closing Date", date.today())
+            
+        with col2:
+            petty_cash_expense = st.number_input("Petty Cash Expense Amount (£/€)", min_value=0.0, format="%.2f")
+            closing_balance = st.number_input("Closing Balance Amount (£/€)", min_value=0.0, format="%.2f")
+
+        st.markdown("---")
+        st.markdown("##### 👥 Confirmation & Sign-Off Details")
+        col3, col4 = st.columns(2)
+        with col3:
+            confirmed_by = st.text_input("Confirmation By (Person Name)")
+        with col4:
+            confirmed_post = st.selectbox("Post / Designation", POST_OPTIONS)
+
+        st.markdown("---")
+        uploaded_file = st.file_uploader("Upload Attachment (PDF, Image, Mail Receipt)", type=["pdf", "png", "jpg", "jpeg", "eml"])
+        notes = st.text_area("Additional Notes / Remarks")
+        
+        submit_btn = st.form_submit_button("Submit Record")
         
         if submit_btn:
-            url = ""
-            if uploaded_file:
+            if not prism_id_input:
+                st.error("❌ PRISM Property ID fill karna zaroori hai.")
+            else:
+                url = ""
+                if uploaded_file:
+                    try:
+                        file_bytes = uploaded_file.read()
+                        file_path = f"{prism_id_input}/{month_year}_{uploaded_file.name}"
+                        supabase.storage.from_("month_end_attachments").upload(file_path, file_bytes)
+                        url = supabase.storage.from_("month_end_attachments").get_public_url(file_path)
+                    except Exception as upload_err:
+                        st.warning(f"Attachment alert: {str(upload_err)}")
+                
+                payload = {
+                    "created_at": datetime.now().isoformat(),
+                    "submitted_by": st.session_state.username,
+                    "prism_id": prism_id_input,
+                    "hotel_name": hotel_name,
+                    "region": region,
+                    "month_year": month_year,
+                    "closing_date": str(closing_date),
+                    "petty_cash_expense": petty_cash_expense,
+                    "closing_balance": closing_balance,
+                    "amount": closing_balance,
+                    "confirmed_by": confirmed_by,
+                    "confirmed_post": confirmed_post,
+                    "notes": notes,
+                    "attachment_url": url,
+                    "status": "Submitted"
+                }
+                
                 try:
-                    file_bytes = uploaded_file.read()
-                    file_path = f"{prism_id}/{month_year}_{uploaded_file.name}"
-                    supabase.storage.from_("month_end_attachments").upload(file_path, file_bytes)
-                    url = supabase.storage.from_("month_end_attachments").get_public_url(file_path)
-                except Exception as upload_err:
-                    st.warning(f"Attachment alert: {str(upload_err)}")
-            
-            payload = {
-                "created_at": datetime.now().isoformat(),
-                "submitted_by": st.session_state.username,
-                "prism_id": prism_id,
-                "month_year": month_year,
-                "region": region,
-                "category": category,
-                "amount": amount,
-                "closing_date": str(closing_date),
-                "attachment_url": url,
-                "status": "Submitted"
-            }
-            supabase.table("month_end_cash_tracker").insert(payload).execute()
-            st.success("Record successfully saved!")
+                    supabase.table("month_end_cash_tracker").insert(payload).execute()
+                    st.success("✅ Entry saved successfully!")
+                except Exception as db_err:
+                    st.error(f"❌ Database error: {str(db_err)}")
+
+elif page == "Audit & Status Update":
+    components.html(live_clock_html, height=25)
+    st.markdown("### ⚙️ Audit & Status Management")
+    df = fetch_closing_records()
+    if not df.empty:
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.info("No records to audit.")
+
+elif page == "Month-End Reports":
+    components.html(live_clock_html, height=25)
+    st.markdown("### 📥 Reports Export")
+    df = fetch_closing_records()
+    if not df.empty:
+        csv = df.to_csv(index=False).encode('utf-8')
+        st.download_button("Download CSV Report", csv, "month_end_report.csv", "text/csv")
