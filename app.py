@@ -342,7 +342,8 @@ if page == "Submit Month-End Closing":
                 }
                 
                 try:
-                    supabase.table("month_end_cash_tracker").insert(payload).execute()
+                    # Using upsert with on_conflict to update existing records if prism_id + month_year already exists
+                    supabase.table("month_end_cash_tracker").upsert(payload, on_conflict="prism_id,month_year").execute()
                     st.success("✅ MONTH-END CLOSING RECORDED & STORED SUCCESSFULLY IN DATABASE!")
                 except Exception as db_err:
                     st.error(f"❌ Database Insertion Error: {str(db_err)}")
@@ -354,7 +355,6 @@ elif page == "Closing Overview & Ledger":
     st.markdown("<h3 style='color:#1e3a8a; font-family: Segoe UI, sans-serif;'>📊 MONTH-END CASH & EXPENSE LEDGER OVERVIEW</h3>", unsafe_allow_html=True)
     df = fetch_closing_records()
     if not df.empty:
-        # Clean & orderly column selection to prevent clutter
         desired_cols = [
             "id", "prism_id", "hotel_name", "region", "month_year", 
             "closing_cash_balance", "petty_cash_expense", "fine_amount", 
