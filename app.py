@@ -1,6 +1,7 @@
-import streamlit as st
-import pandas as pd
+import io
 from datetime import datetime, date
+import pandas as pd
+import streamlit as st
 from supabase import create_client, Client
 
 @st.cache_resource
@@ -132,7 +133,7 @@ def render_header():
     
     col_logo, col_title, col_time = st.columns([1.2, 3, 1.5])
     with col_logo:
-        # Direct SVG / Logo representation for flawless display
+        # Corporate Logo Integration
         logo_svg = """
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 70" width="130" height="35">
           <text x="5" y="52" font-family="'Segoe UI', sans-serif" font-weight="800" font-size="48" fill="#1e3a8a" letter-spacing="3">PRISM</text>
