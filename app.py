@@ -49,20 +49,6 @@ st.markdown("""
         padding-bottom: 2rem !important;
     }
 
-    .pos-header-container {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
-        padding: 10px 20px;
-        border-radius: 4px;
-        border: 1px solid #94a3b8;
-        margin-bottom: 15px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        width: 100%;
-        box-sizing: border-box;
-    }
-
     section[data-testid="stSidebar"] { 
         background-color: #e2e8f0; 
         border-right: 1px solid #cbd5e1;
@@ -146,8 +132,13 @@ def render_header():
     
     col_logo, col_title, col_time = st.columns([1.2, 3, 1.5])
     with col_logo:
-        # Direct render of your provided PRISM logo image
-        st.image("https://i.imgur.com/8QG3YyL.png", width=140)
+        # Direct SVG / Logo representation for flawless display
+        logo_svg = """
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 70" width="130" height="35">
+          <text x="5" y="52" font-family="'Segoe UI', sans-serif" font-weight="800" font-size="48" fill="#1e3a8a" letter-spacing="3">PRISM</text>
+        </svg>
+        """
+        st.markdown(logo_svg, unsafe_allow_html=True)
     with col_title:
         st.markdown("<div style='text-align: center;'><span style='color: #1e3a8a; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;'>Month-End Cash & Expense Portal (UK & Europe Operations)</span></div>", unsafe_allow_html=True)
     with col_time:
@@ -224,8 +215,7 @@ MONTH_OPTIONS = ["Jan'26", "Feb'26", "Mar'26", "Apr'26", "May'26", "Jun'26", "Ju
 if page == "Submit Month-End Closing":
     render_header()
     
-    st.markdown("<h4 style='color: #1e3a8a; font-family: Segoe UI, sans-serif;'>⚡ MONTH-END CASH & EXPENSE CLOSING WIZARD</h4>", unsafe_allow_html=True)
-    st.markdown("<div style='color: #475569; font-size: 12px; margin-bottom: 12px;'>Enter PRISM Property ID below to auto-fetch Hotel Name and Region from Hotel Master.</div>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color: #1e3a8a; font-family: Segoe UI, sans-serif; margin-bottom: 15px;'>⚡ MONTH-END CASH & EXPENSE CLOSING WIZARD</h4>", unsafe_allow_html=True)
 
     if "auto_hotel_name" not in st.session_state:
         st.session_state.auto_hotel_name = ""
