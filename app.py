@@ -228,7 +228,7 @@ with st.sidebar:
     if not st.session_state.authenticated:
         st.markdown("<div style='color: #64748b; font-size: 12px;'>Please authenticate to access cash closing modules.</div>", unsafe_allow_html=True)
     else:
-        st.markdown(f"👤 **Operator:** {st.session_state.username}")
+        st.markdown(f"👤 **Manager:** {st.session_state.username}")
         st.markdown(f"🔑 **Access Level:** {st.session_state.user_role}")
         st.markdown("---")
         page = st.sidebar.radio("Terminal Menu", [
@@ -241,7 +241,7 @@ with st.sidebar:
             st.session_state.authenticated = False
             st.rerun()
 
-# ----------------- UPGRADED OPERATOR LOGIN SCREEN -----------------
+# ----------------- UPGRADED MANAGER LOGIN SCREEN -----------------
 if not st.session_state.authenticated:
     components.html(live_clock_html, height=75)
     st.markdown("<br>", unsafe_allow_html=True)
@@ -251,11 +251,11 @@ if not st.session_state.authenticated:
             st.markdown("""
                 <div style='text-align: center; margin-bottom: 20px;'>
                     <h2 style='color:#38bdf8; font-family: monospace; margin-bottom: 5px;'>🔐 TERMINAL LOGIN</h2>
-                    <p style='color:#94a3b8; font-size: 13px;'>Enter operator credentials to access cash closing system</p>
+                    <p style='color:#94a3b8; font-size: 13px;'>Enter manager credentials to access cash closing system</p>
                 </div>
             """, unsafe_allow_html=True)
             
-            user_input = st.text_input("OPERATOR USERNAME", placeholder="e.g. admin or finance_uk")
+            user_input = st.text_input("MANAGER USERNAME", placeholder="e.g. admin or finance_uk")
             pass_input = st.text_input("SECURE PASSWORD", type="password", placeholder="••••••••")
             
             st.markdown("<br>", unsafe_allow_html=True)
@@ -270,7 +270,7 @@ if not st.session_state.authenticated:
                         if res.data and str(res.data[0].get("password", "")).strip() == pass_input.strip():
                             st.session_state.authenticated = True
                             st.session_state.username = res.data[0]["username"]
-                            st.session_state.user_role = res.data[0].get("role", "Standard User")
+                            st.session_state.user_role = res.data[0].get("role", "Manager")
                             st.rerun()
                         else:
                             st.error("❌ Authentication Failed: Invalid Credentials!")
@@ -279,51 +279,27 @@ if not st.session_state.authenticated:
     st.stop()
 
 REGION_OPTIONS = ["UK", "Europe"]
-POST_OPTIONS = ["GM", "CGM", "Reception", "Host", "Mice", "Accounts", "PPM", "Other"]
-MONTH_OPTIONS = ["Jan-2026", "Feb-2026", "Mar-2026", "Apr-2026", "May-2026", "Jun-2026", "Jul-2026", "Aug-2026", "Sep-2026", "Oct-2026", "Nov-2026", "Dec-2026"]
+POST_OPTIONS = ["General Manager", "Cluster General Manager", "Finance Manager", "Assistant Manager", "Accounts Executive", "Other"]
+MONTH_OPTIONS = ["Jan'26", "Feb'26", "Mar'26", "Apr'26", "May'26", "Jun'26", "Jul'26", "Aug'26", "Sep'26", "Oct'26", "Nov'26", "Dec'26"]
 
 # ----------------- 1. SUBMIT MONTH-END CLOSING TERMINAL -----------------
 if page == "Submit Month-End Closing":
     components.html(live_clock_html, height=75)
     
-    properties_df = fetch_all_properties()
-    property_options = []
-    prop_mapping = {}
-    
-    if not properties_df.empty:
-        for _, row in properties_df.iterrows():
-            p_id = str(row.get("prism_id", "")).strip()
-            p_name = str(row.get("property_name", "")).strip()
-            p_region = str(row.get("property_region", "UK")).strip()
-            display_str = f"{p_id} — {p_name} ({p_region})"
-            property_options.append(display_str)
-            prop_mapping[display_str] = {"prism_id": p_id, "name": p_name, "region": p_region}
-
     st.markdown("<h4 style='color: #38bdf8; font-family: monospace;'>⚡ MONTH-END CASH CLOSING WIZARD</h4>", unsafe_allow_html=True)
-    
-    selected_property_display = st.selectbox("SELECT PROPERTY FROM MASTER DIRECTORY", property_options if property_options else ["No properties found"])
-    
-    if selected_property_display in prop_mapping:
-        auto_prism_id = prop_mapping[selected_property_display]["prism_id"]
-        auto_hotel_name = prop_mapping[selected_property_display]["name"]
-        auto_region = prop_mapping[selected_property_display]["region"]
-    else:
-        auto_prism_id = ""
-        auto_hotel_name = ""
-        auto_region = "UK"
+    st.markdown("<div style='color: #94a3b8; font-size: 13px; margin-bottom: 15px;'>Enter PRISM Property ID, Hotel Name, and Region manually below.</div>", unsafe_allow_html=True)
 
     with st.form("cash_closing_form", clear_on_submit=False):
         st.markdown("<div class='pos-section-title'>🏢 PROPERTY & PERIOD IDENTIFICATION</div>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         
         with col1:
-            prism_id_input = st.text_input("PRISM PROPERTY ID (AUTO)", value=auto_prism_id)
-            hotel_name = st.text_input("VERIFIED HOTEL NAME", value=auto_hotel_name)
-            region_idx = REGION_OPTIONS.index(auto_region) if auto_region in REGION_OPTIONS else 0
-            region = st.selectbox("OPERATING REGION", REGION_OPTIONS, index=region_idx)
+            prism_id_input = st.text_input("PRISM PROPERTY ID (MANUAL ENTRY)", placeholder="e.g. UK001 or LONHOTEL")
+            hotel_name = st.text_input("HOTEL NAME", placeholder="e.g. OYO Townhouse London")
+            region = st.selectbox("OPERATING REGION", REGION_OPTIONS)
             
         with col2:
-            month_year = st.selectbox("CLOSING MONTH-YEAR", MONTH_OPTIONS, index=8) # Default Sep-2026
+            month_year = st.selectbox("CLOSING MONTH-YEAR", MONTH_OPTIONS, index=8) # Default Sep'26
             closing_date = st.date_input("REPORTING DATE", date.today())
 
         st.markdown("<div class='pos-section-title'>💰 CASH RECONCILIATION & CLOSING FIGURES</div>", unsafe_allow_html=True)
@@ -410,7 +386,7 @@ elif page == "Master Reports & Pending":
     components.html(live_clock_html, height=75)
     st.markdown("<h3 style='color:#38bdf8; font-family: monospace;'>📥 MASTER HOTEL REPORT & MISSING DATA TRACKER</h3>", unsafe_allow_html=True)
     
-    selected_month = st.selectbox("SELECT MONTH-YEAR FOR STATUS AUDIT", MONTH_OPTIONS, index=8) # Default Sep-2026
+    selected_month = st.selectbox("SELECT MONTH-YEAR FOR STATUS AUDIT", MONTH_OPTIONS, index=8) # Default Sep'26
     
     properties_df = fetch_all_properties()
     entries_df = fetch_closing_records()
